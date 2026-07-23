@@ -64,6 +64,7 @@ FIRST_PARTY_VERBS: MappingProxyType[str, FirstPartyVerb] = MappingProxyType(
         "link": FirstPartyVerb("astro-mine-link", "publish contact plans"),
         "mind": FirstPartyVerb("astro-mine-mind", "validate and compose planner stacks"),
         "guard": FirstPartyVerb("astro-mine-guard", "author, compile and falsify SafetySpecs"),
+        "cloud": FirstPartyVerb("astro-mine-cloud", "submit and manage cluster jobs"),
     }
 )
 
