@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # hatch-vcs derives the version from git history; a shallow clone has none, and the
+          # build then fails or stamps a wrong version.
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      # NOTE: every sibling repo has an "Authenticate to private dependencies" step here, which
+      # rewrites GitHub HTTPS fetches with $CORE_REPO_TOKEN so `uv sync` can resolve the private
+      # astro-mine-core git source. This repo deliberately has none: astro-mine-cli declares no
+      # runtime dependencies at all (RFC-0011 -- the local tier must stay light), so there is
+      # nothing private to resolve. Do not restore the step by copy-paste from a sibling; if it
+      # ever becomes necessary, the zero-dependency rule has already been broken upstream of it.
+      - name: Sync dependencies
+        run: uv sync --locked
+
+      - name: Lint (ruff)
+        # `uv run ruff`, never a pinned `uvx ruff`: the pinned form silently misses rules added
+        # in newer releases, which surfaces as a CI-only failure the next time anything bumps.
+        run: uv run ruff check .
+
+      - name: Format check (ruff)
+        run: uv run ruff format --check .
+
+      - name: Type-check (mypy)
+        run: uv run mypy src
+
+      # The zero-dependency rule is asserted in the test lane
+      # (tests/test_packaging.py::test_declares_no_runtime_dependencies), so it is enforced
+      # locally and in CI by the same command, rather than by a bespoke workflow step that only
+      # ever runs here.
+      - name: Test (pytest + coverage gate)
+        run: uv run pytest --cov --cov-report=term-missing --cov-fail-under=95
+
+      # The claim this package makes about itself, checked the way a user would: build the
+      # wheel, install it into an environment containing nothing else, and run it. No source
+      # checkout, no dev group, no siblings -- if `astro-mine` needs anything we did not declare,
+      # it fails here.
+      - name: Install the built wheel into a bare environment and run it
+        run: |
+          uv build --wheel
+          uv venv /tmp/bare-venv
+          VIRTUAL_ENV=/tmp/bare-venv uv pip install dist/*.whl
+          /tmp/bare-venv/bin/astro-mine --version
+          /tmp/bare-venv/bin/astro-mine --help
+          test -z "$(VIRTUAL_ENV=/tmp/bare-venv uv pip list --format json \
+            | python -c 'import json,sys; print(" ".join(d["name"] for d in json.load(sys.stdin) if d["name"] != "astro-mine-cli"))')"
