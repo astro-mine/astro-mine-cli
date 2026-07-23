@@ -78,9 +78,23 @@ mypy_path = "src"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+markers = [
+  # Builds a wheel, creates a virtualenv, and installs the umbrella alongside a fixture provider
+  # distribution. Slower than the injected lane and NOT deselected in CI: it is the only place the
+  # packaging metadata that makes entry-point discovery work is actually exercised.
+  "integration: installs packages into a throwaway venv and drives the console script",
+]
 
 [tool.coverage.run]
 source = ["src/astro_mine"]
+# The integration lane runs the code in a separate interpreter, so its coverage is invisible here.
+# The injected lane covers the same paths in-process; the two are complementary, and the gate is
+# set against the in-process one.
+#
+# `__main__` is the `python -m astro_mine.cli` guard: unreachable in-process by construction, and
+# exercised for real by tests/test_installed_provider.py, which runs it as a subprocess in the
+# venv. Omitted rather than papered over with a coverage pragma, so the reason stays written down.
+omit = ["*/cli/__main__.py"]
 
 [tool.coverage.report]
 show_missing = true
