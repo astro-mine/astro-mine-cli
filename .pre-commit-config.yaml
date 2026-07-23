@@ -1,0 +1,48 @@
+# Pre-commit hooks — run `uv run pre-commit install` once per clone.
+# https://pre-commit.com
+#
+# DELIBERATE DEVIATION FROM THE SIBLING REPOS: ruff and mypy run as `local` hooks through
+# `uv run`, not as upstream hooks pinned by `rev`.
+#
+# The sibling template pins `ruff-pre-commit` at a rev while CI lints with `uv run ruff` — the
+# version resolved in uv.lock. The two drift apart the moment either moves, and they do not merely
+# disagree: ruff's formatter changes between releases, so the hook reformats a file one way and CI
+# then demands the other. A contributor who installs the hooks produces commits that fail CI, with
+# nothing in the error to explain why. (Observed here between the pinned 0.6.9 and the locked
+# 0.16.0, on an assert-with-message.)
+#
+# Routing both through `uv run` makes the hook and the CI step the same binary by construction, so
+# a `uv lock --upgrade` moves them together and there is one version of the truth per checkout.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (uv run — the version CI uses)
+        entry: uv run ruff check --fix
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: ruff-format
+        name: ruff-format (uv run — the version CI uses)
+        entry: uv run ruff format
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: mypy
+        name: mypy (uv run — the version CI uses)
+        entry: uv run mypy src
+        language: system
+        pass_filenames: false
+        types_or: [python, pyi]
+        require_serial: true

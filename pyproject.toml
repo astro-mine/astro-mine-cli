@@ -1,0 +1,92 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "astro-mine-cli"
+dynamic = ["version"]
+description = "Astro-Mine-CLI — the discoverable umbrella CLI: `astro-mine <verb>`, a near-zero-dependency dispatcher over the astro_mine.cli entry-point group."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+authors = [{ name = "Astro-Mine project contributors" }]
+keywords = ["astro-mine", "cli", "command-line", "entry-points", "swarm"]
+classifiers = [
+  # `3 - Alpha`, not `1 - Planning`: this package ships a working console script from its first
+  # commit. The platform-wide "Planning" drift is astro-mine/docs#40 -- do not add to the pile.
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3.12",
+]
+# EMPTY, DELIBERATELY, AND ENFORCED (tests/test_packaging.py::test_declares_no_runtime_dependencies).
+#
+# This is the one component package with no runtime dependencies -- not even astro-mine-core.
+# RFC-0011 §"Alternatives considered" (a) rejected the umbrella-that-depends-on-everything
+# precisely because `pip install` for one verb would drag Ray, a Rust toolchain, CP-SAT and SPICE
+# onto the machine, breaking the local tier that "MUST always work" (conventions.md §7).
+#
+# The umbrella therefore depends on the entry-point *group name* -- `astro_mine.cli` -- and never
+# on a provider. Discovery reads installed distribution metadata (stdlib importlib.metadata) and
+# argparse builds the parser; a provider is imported only when its verb actually runs. A component
+# stays independently installable, and a machine with one component installed pays for one.
+#
+# Adding a dependency here is a design change, not a convenience. Take it through the RFC.
+dependencies = []
+
+[project.scripts]
+# The single umbrella entry point. `astro-mine <verb>` is the discoverable surface
+# (conventions.md §13, normative); every component CLI keeps working when invoked directly.
+astro-mine = "astro_mine.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/astro-mine/astro-mine-cli"
+Documentation = "https://github.com/astro-mine/docs"
+Issues = "https://github.com/astro-mine/astro-mine-cli/issues"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.2",
+  "pytest-cov>=5.0",
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "pre-commit>=3.7",
+]
+
+[tool.hatch.version]
+source = "vcs"
+raw-options = { local_scheme = "no-local-version" }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/astro_mine"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.coverage.run]
+source = ["src/astro_mine"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "^\\s*\\.\\.\\.$",
+  "@(typing\\.)?overload",
+]
