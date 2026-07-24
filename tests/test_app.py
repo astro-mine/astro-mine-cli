@@ -1,4 +1,4 @@
-"""The empty state — the first thing every user sees, before anything is installed.
+"""The bare-install state — the first thing every user sees, before installing a component.
 
 Regression cover from the standup (#1), kept intact through the dispatcher's arrival: a machine
 with no components installed is the normal starting point, and the umbrella's behaviour there is
@@ -22,7 +22,17 @@ def test_bare_invocation_prints_help_and_succeeds(capsys: pytest.CaptureFixture[
     assert main([], verbs=EMPTY) == 0  # type: ignore[arg-type]
     out = capsys.readouterr().out
     assert "usage: astro-mine" in out
-    assert "No verbs are registered" in out
+    assert "Verbs:" in out
+
+
+def test_validate_is_always_available(capsys: pytest.CaptureFixture[str]) -> None:
+    """The umbrella is never truly verb-less any more: it owns `validate` itself, because routing a
+    document to the component that owns its format is the one job no component can do (RFC-0011
+    §6). With nothing installed the verb is still listed — running it then names the package that
+    owns the format at hand, which is the honest failure."""
+    main([], verbs=EMPTY)  # type: ignore[arg-type]
+    out = capsys.readouterr().out
+    assert "validate" in out.split("not installed here")[0]
 
 
 def test_the_empty_state_still_maps_the_platform(capsys: pytest.CaptureFixture[str]) -> None:

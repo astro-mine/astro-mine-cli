@@ -28,7 +28,8 @@ from astro_mine.cli._discovery import (
     load_verb,
 )
 from astro_mine.cli._manifest import FIRST_PARTY_VERBS, install_hint
-from astro_mine.cli._protocol import InvalidSubcommandError
+from astro_mine.cli._protocol import InvalidSubcommandError, Subcommand
+from astro_mine.cli._validate import validate as _validate_verb
 
 __all__ = ["build_parser", "main"]
 
@@ -39,6 +40,15 @@ _DESCRIPTION = "The Astro-Mine umbrella CLI — one front door to the platform's
 #: conflating that with the verb's *own* failure codes (which start at 1) would make a script
 #: unable to tell "I am misconfigured" from "the run failed".
 _USAGE_ERROR = 2
+
+#: Verbs the umbrella owns itself. There is exactly one, and it is here for a reason rather than
+#: for convenience: `validate` routes a document to whichever component owns its format, which no
+#: single component can do without importing its siblings (RFC-0011 §6; see _validate.py).
+#:
+#: Built-ins are seeded like Allocate's solver registry seeds CP-SAT — and collide the same way: a
+#: distribution advertising a verb that shadows one is a hard error naming both, never a silent
+#: winner. Importing this module costs nothing external; only running the verb loads a validator.
+_BUILTIN_VERBS: dict[str, Subcommand] = {_validate_verb.name: _validate_verb}
 
 
 def build_parser(verbs: Mapping[str, EntryPoint] | None = None) -> argparse.ArgumentParser:
@@ -92,6 +102,16 @@ def main(
         print(f"astro-mine: {exc}", file=sys.stderr)
         return _USAGE_ERROR
 
+    shadowed = sorted(set(discovered) & set(_BUILTIN_VERBS))
+    if shadowed:
+        names = ", ".join(f"{v!r} ({describe_provider(discovered[v])})" for v in shadowed)
+        print(
+            f"astro-mine: {names} shadows a built-in verb the umbrella owns; uninstall the "
+            f"package or ask it to rename its `astro_mine.cli` entry point",
+            file=sys.stderr,
+        )
+        return _USAGE_ERROR
+
     parser = build_parser(discovered)
     args = parser.parse_args(argv)
 
@@ -99,15 +119,18 @@ def main(
         parser.print_help()
         return 0
 
-    entry = discovered.get(args.verb)
-    if entry is None:
-        return _report_missing(parser, args.verb, discovered)
-
-    try:
-        subcommand = load_verb(entry)
-    except InvalidSubcommandError as exc:
-        print(f"astro-mine: {exc}", file=sys.stderr)
-        return _USAGE_ERROR
+    builtin = _BUILTIN_VERBS.get(args.verb)
+    if builtin is not None:
+        subcommand: Subcommand = builtin
+    else:
+        entry = discovered.get(args.verb)
+        if entry is None:
+            return _report_missing(parser, args.verb, discovered)
+        try:
+            subcommand = load_verb(entry)
+        except InvalidSubcommandError as exc:
+            print(f"astro-mine: {exc}", file=sys.stderr)
+            return _USAGE_ERROR
     sub = argparse.ArgumentParser(
         prog=f"astro-mine {args.verb}",
         description=subcommand.help,
@@ -145,14 +168,16 @@ def _format_verbs(discovered: Mapping[str, EntryPoint]) -> str:
     discovery problem (**UC-A3**) this package exists to solve — as long as it never implies they
     are runnable here.
     """
-    installed = sorted(discovered)
-    absent = sorted(v for v in FIRST_PARTY_VERBS if v not in discovered)
+    installed = sorted({*discovered, *_BUILTIN_VERBS})
+    absent = sorted(v for v in FIRST_PARTY_VERBS if v not in discovered and v not in _BUILTIN_VERBS)
     width = max((len(v) for v in (*installed, *absent)), default=0) + 2
     lines: list[str] = []
 
     if installed:
         lines.append("Verbs:")
-        lines += [f"  {verb:<{width}}{_summarize(verb, discovered[verb])}" for verb in installed]
+        lines += [
+            f"  {verb:<{width}}{_summarize(verb, discovered.get(verb))}" for verb in installed
+        ]
     else:
         lines.append("No verbs are registered in this environment yet.")
 
@@ -175,13 +200,17 @@ def _format_verbs(discovered: Mapping[str, EntryPoint]) -> str:
     return "\n".join(lines)
 
 
-def _summarize(verb: str, entry: EntryPoint) -> str:
+def _summarize(verb: str, entry: EntryPoint | None) -> str:
     """One line about an installed verb — from the manifest, or from its metadata.
 
     Never from the provider: reading ``Subcommand.help`` here would import every installed
     component to render a help screen, which is the exact cost this design refuses to pay.
     """
+    builtin = _BUILTIN_VERBS.get(verb)
+    if builtin is not None:
+        return builtin.help
     known = FIRST_PARTY_VERBS.get(verb)
     if known is not None:
         return known.help
+    assert entry is not None  # a non-built-in verb always came from an entry point
     return f"provided by {describe_provider(entry)}"

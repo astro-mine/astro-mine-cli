@@ -49,12 +49,46 @@ The workflow says so at the point where a copy-paste from a sibling would land.
 ```
 src/astro_mine/cli/
   __init__.py     # public surface: __version__, main, build_parser, Subcommand, discover_verbs
-  _protocol.py    # the contribution contract + the conformance check
+  _protocol.py    # the verb contribution contract + the conformance check
   _manifest.py    # the static first-party table (verb → distribution, help)
-  _discovery.py   # entry-point enumeration; the only place a provider is imported
-  _dispatch.py    # the two-phase parser and the dispatch loop
+  _discovery.py   # verb enumeration; the only place a provider is imported
+  _dispatch.py    # the two-phase parser, built-in verbs, and the dispatch loop
+  _validators.py  # the validator contract + discovery (the `validate` federation)
+  _validate.py    # the built-in `validate` verb — a router, not a validator
   __main__.py     # `python -m astro_mine.cli`
 ```
+
+## The one built-in verb: `validate`
+
+Every other verb belongs to a component. `validate` belongs here because it is the only one whose
+job is *"work out who owns this document and ask them"* — and no single component can do that
+without importing its siblings, which the narrow waist forbids (`conventions.md §1.1`).
+
+It was Core's registered verb at first, and that could never have federated: extending it would
+have meant Core consulting Guard and Mind, i.e. Core importing its own consumers. Moving the verb
+up here is what lets each owner keep its checker while a user types one command (RFC-0011 §6).
+
+**The umbrella still parses nothing.** It has no YAML parser and gaining one would break the
+zero-dependency rule, so routing is inverted: rather than reading a file to decide who owns it, the
+umbrella asks each validator `claims(path)` and hands the file to whoever says yes. Every owner
+already has the parser and the schema; none of that is duplicated here, and a tenth format needs no
+change to this package. A test asserts this file contains no document parsing at all.
+
+The cost, stated plainly: running `validate` imports **every** installed validator, because
+ownership cannot be determined without asking. It is paid only by the command the user typed —
+never by `--help` — and the alternative, first-claim-wins, would buy fewer imports with a silent
+precedence rule.
+
+| Situation | Behaviour |
+|---|---|
+| Two validators claim one file | Hard error naming both — which checker judged a document is provenance |
+| Nobody claims it | Refused, listing who *is* installed. A document is never checked against a guessed schema |
+| No validators installed | Names the package that owns the format at hand |
+| A distribution advertises a `validate` verb | Hard error: a built-in cannot be shadowed silently |
+
+A document must be **self-describing** to be routed — the umbrella has to identify the owner before
+anyone can be told a `--kind`. For a file without that marker, the owning CLI still takes `--kind`
+directly.
 
 The console script `astro-mine` resolves to `astro_mine.cli:main`; that name and target are pinned
 by a test, because RFC-0011's per-component dispatch (`astro-mine studio serve`) is a thin call into

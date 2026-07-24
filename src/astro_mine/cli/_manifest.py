@@ -22,6 +22,11 @@ not quietly reintroduced through this file.
 
 Entries are added when a component actually registers the verb, or ahead of it as a promise the
 umbrella can keep honestly ("not installed"), never as a claim that it works.
+
+``validate`` is deliberately **absent**: the umbrella owns that verb itself (RFC-0011 §6), so it
+can never be the missing-component case this table exists to describe. Its own error names the
+package that owns the format at hand — which is more specific than anything a static row could
+say, since `validate` has several owners.
 """
 
 from __future__ import annotations
@@ -52,7 +57,6 @@ FIRST_PARTY_VERBS: MappingProxyType[str, FirstPartyVerb] = MappingProxyType(
         "run": FirstPartyVerb("astro-mine-sim", "run a scenario in the simulator"),
         "record": FirstPartyVerb("astro-mine-sim", "record a self-contained Sim scenario file"),
         "train": FirstPartyVerb("astro-mine-learn", "train a policy and export it"),
-        "validate": FirstPartyVerb("astro-mine-core", "validate an authored document"),
         "publish": FirstPartyVerb("astro-mine-hub", "publish a signed artifact to a registry"),
         "search": FirstPartyVerb("astro-mine-hub", "discover artifacts in a registry"),
         "pull": FirstPartyVerb("astro-mine-hub", "pull and re-verify an artifact"),
