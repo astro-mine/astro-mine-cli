@@ -50,6 +50,15 @@ _USAGE_ERROR = 2
 _NO_BUILTINS: Mapping[str, Subcommand] = MappingProxyType({})
 
 
+def _is_installed(distribution: str) -> bool:
+    """Is this distribution present? A metadata read — no import, so the listing stays free."""
+    try:
+        version(distribution)
+    except PackageNotFoundError:
+        return False
+    return True
+
+
 class _Scaffolder:
     """The shared body of both verbs: list kinds, or route one kind to its owner.
 
@@ -124,15 +133,27 @@ class _Scaffolder:
         else:
             lines.append(f"No {self.noun}s are available in this environment yet.")
 
-        if absent:
-            lines += [
-                "",
-                "Available from components that are not installed here:",
-                *(
-                    f"  {kind:<{width}}{self.table[kind].help} [{self.table[kind].distribution}]"
-                    for kind in absent
-                ),
-            ]
+        # The same split the missing-kind path makes, and for the same reason: a kind whose owner is
+        # installed but silent is not "from a component that is not installed here". Saying so would
+        # be the listing contradicting what running the command tells you thirty seconds later, and
+        # sending the user to install what they already have.
+        uninstalled = [kind for kind in absent if not _is_installed(self.table[kind].distribution)]
+        unoffered = [kind for kind in absent if kind not in uninstalled]
+
+        for heading, kinds in (
+            ("Available from components that are not installed here:", uninstalled),
+            ("Known, but the component that owns them offers no scaffold yet:", unoffered),
+        ):
+            if kinds:
+                lines += [
+                    "",
+                    heading,
+                    *(
+                        f"  {kind:<{width}}{self.table[kind].help} "
+                        f"[{self.table[kind].distribution}]"
+                        for kind in kinds
+                    ),
+                ]
         lines += ["", f"`astro-mine {self.command} <{self.noun}> --help` shows its own options."]
         return "\n".join(lines)
 

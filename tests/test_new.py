@@ -173,6 +173,36 @@ def test_an_installed_component_that_offers_no_scaffold_is_not_told_to_install_i
     assert "Traceback" not in err
 
 
+def test_the_listing_makes_the_same_distinction_the_error_does(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A listing that filed an installed-but-silent component under "not installed here" would
+    contradict what running the command tells the user thirty seconds later — and send them to
+    install what they already have. Found in a real nine-component environment, where `world` was
+    listed as absent while Worlds was installed.
+    """
+    monkeypatch.setattr(
+        new._scaffolder,
+        "table",
+        {
+            # Installed (this package always is, while these tests run) but offering no scaffold.
+            "world": FirstPartyKind("astro-mine-cli", "a WorldSpec"),
+            # Genuinely absent.
+            "asset": FirstPartyKind("astro-mine-fleet", "a SADF asset"),
+        },
+    )
+    monkeypatch.setattr("astro_mine.cli._new.discover_scaffolds", lambda group: {})
+    assert new.run(argparse.Namespace(kind=None, rest=[])) == 0
+    out = capsys.readouterr().out
+
+    not_installed, _, no_scaffold = out.partition("offers no scaffold yet")
+    assert "asset" in not_installed
+    assert (
+        "world" in no_scaffold
+        or "world" in out.split("not installed here")[1].split("offers no scaffold yet")[1]
+    )
+
+
 def test_two_distributions_offering_one_kind_is_a_hard_error(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
