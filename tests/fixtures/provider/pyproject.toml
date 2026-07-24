@@ -20,5 +20,14 @@ passthrough = "am_cli_test_provider:passthrough"
 # packaging bug in *this* distribution, not raise an AttributeError out of its own internals.
 malformed = "am_cli_test_provider:MALFORMED"
 
+# The same "no PR to extend" claim, for scaffolds (RFC-0011 §7). The entry-point NAME is the kind
+# as typed: `astro-mine new demo-doc`, `astro-mine plugin new demo-plugin`. Neither kind is
+# mentioned anywhere in astro-mine-cli.
+[project.entry-points."astro_mine.cli.scaffolds"]
+demo-doc = "am_cli_test_provider:doc_scaffold"
+
+[project.entry-points."astro_mine.cli.plugin_scaffolds"]
+demo-plugin = "am_cli_test_provider:plugin_scaffold"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/am_cli_test_provider"]

@@ -26,7 +26,13 @@ umbrella can keep honestly ("not installed"), never as a claim that it works.
 ``validate`` is deliberately **absent**: the umbrella owns that verb itself (RFC-0011 §6), so it
 can never be the missing-component case this table exists to describe. Its own error names the
 package that owns the format at hand — which is more specific than anything a static row could
-say, since `validate` has several owners.
+say, since `validate` has several owners. ``new`` and ``plugin`` are absent for the same reason —
+but the *kinds* they route to are components' own, so those get tables of their own below.
+
+**This module imports nothing and computes nothing.** It is data plus string formatting, which is
+what lets `astro-mine --help` stay free. In particular the *"installed but registers no such
+kind"* case is not decided here: that needs an ``importlib.metadata`` probe, and it lives with the
+verb that needs it (:mod:`astro_mine.cli._new`).
 """
 
 from __future__ import annotations
@@ -34,7 +40,14 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import NamedTuple
 
-__all__ = ["FIRST_PARTY_VERBS", "FirstPartyVerb", "install_hint"]
+__all__ = [
+    "FIRST_PARTY_KINDS",
+    "FIRST_PARTY_PLUGIN_KINDS",
+    "FIRST_PARTY_VERBS",
+    "FirstPartyKind",
+    "FirstPartyVerb",
+    "install_hint",
+]
 
 
 class FirstPartyVerb(NamedTuple):
@@ -69,6 +82,62 @@ FIRST_PARTY_VERBS: MappingProxyType[str, FirstPartyVerb] = MappingProxyType(
         "mind": FirstPartyVerb("astro-mine-mind", "validate and compose planner stacks"),
         "guard": FirstPartyVerb("astro-mine-guard", "author, compile and falsify SafetySpecs"),
         "cloud": FirstPartyVerb("astro-mine-cloud", "submit and manage cluster jobs"),
+    }
+)
+
+
+class FirstPartyKind(NamedTuple):
+    """The distribution that owns a scaffold kind, and one line about what it writes."""
+
+    distribution: str
+    help: str
+
+
+#: Authored-document kinds → owner (`astro-mine new <kind>`; RFC-0011 §7).
+#:
+#: ``world`` is listed but **not yet registered by anyone**: Worlds has no ``WorldSpec`` on disk
+#: and no validator (G2.11, astro-mine/docs#39), so a `world` scaffold would emit a document
+#: nothing can check — the one thing the acceptance criterion for this feature forbids. Listing it
+#: is still honest, because the missing-kind path distinguishes *"Worlds is not installed"* from
+#: *"Worlds is installed and offers no such scaffold"*, and a user who has Worlds is told the
+#: second thing rather than told to install what they already have.
+FIRST_PARTY_KINDS: MappingProxyType[str, FirstPartyKind] = MappingProxyType(
+    {
+        "asset": FirstPartyKind("astro-mine-fleet", "a SADF asset (the exemplar: `fleet new`)"),
+        "stack": FirstPartyKind("astro-mine-mind", "an autonomy stack spec"),
+        "safety": FirstPartyKind("astro-mine-guard", "a SafetySpec"),
+        "world": FirstPartyKind("astro-mine-worlds", "a WorldSpec (not yet offered — G2.11)"),
+    }
+)
+
+#: Plugin kinds → the distribution that hosts the extension group each is written against
+#: (`astro-mine plugin new <kind>`). The kinds are the live entry-point groups documented in the
+#: platform's plugin-authoring guide (`guide/how-to/write-a-plugin.md`, G2.8), which is the
+#: authority on what each scaffold must emit.
+#:
+#: ``cli`` is **absent**, exactly as ``validate`` is absent above: the umbrella owns the
+#: ``astro_mine.cli`` group, so it owns that scaffold and it can never be a missing component.
+FIRST_PARTY_PLUGIN_KINDS: MappingProxyType[str, FirstPartyKind] = MappingProxyType(
+    {
+        "tier": FirstPartyKind(
+            "astro-mine-mind", "an autonomy tier (astro_mine.mind.tier_plugins)"
+        ),
+        "provider": FirstPartyKind("astro-mine-sim", "a content provider (astro_mine.providers)"),
+        "field-model": FirstPartyKind(
+            "astro-mine-worlds", "an illumination backend (astro_mine.field_models)"
+        ),
+        "runner": FirstPartyKind(
+            "astro-mine-bench", "a Bench execution backend (astro_mine.bench.runners)"
+        ),
+        "solver": FirstPartyKind(
+            "astro-mine-allocate", "an allocation backend (astro_mine.allocate.solvers)"
+        ),
+        "algorithm": FirstPartyKind(
+            "astro-mine-learn", "a MARL algorithm (astro_mine.learn.algorithms)"
+        ),
+        "curriculum": FirstPartyKind(
+            "astro-mine-learn", "a training curriculum (astro_mine.learn.curricula)"
+        ),
     }
 )
 

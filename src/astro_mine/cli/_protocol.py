@@ -16,6 +16,14 @@ may of course import this Protocol for type-checking only, under ``if TYPE_CHECK
 The cost of duck-typing is that a mistake surfaces late — which is why :func:`check_subcommand`
 exists: a provider that does not conform is reported by **name, entry point and missing member**,
 never as an ``AttributeError`` raised three frames into dispatch.
+
+**One shape, three groups.** ``astro_mine.cli.scaffolds`` and ``astro_mine.cli.plugin_scaffolds``
+(RFC-0011 §7; :mod:`astro_mine.cli._scaffolds`) bind to *this* contract rather than defining their
+own: a scaffold is a thing with a name the user types, a one-line help, arguments of its own, and a
+``run``. Inventing a second four-member protocol with the same members under different nouns would
+have given component authors two shapes to learn and this package two checkers to keep in step. So
+the checker is parameterized by the *group* and the *noun* it should blame — the message names the
+group the author actually wrote into — and the shape stays one thing.
 """
 
 from __future__ import annotations
@@ -65,35 +73,47 @@ class InvalidSubcommandError(Exception):
     """
 
 
-def check_subcommand(obj: Any, *, verb: str, entry: EntryPoint | None = None) -> Subcommand:
+def check_subcommand(
+    obj: Any,
+    *,
+    verb: str,
+    entry: EntryPoint | None = None,
+    contract: str = "astro_mine.cli",
+    noun: str = "verb",
+) -> Subcommand:
     """Return ``obj`` if it satisfies :class:`Subcommand`, else raise with a usable message.
 
     ``entry`` is optional so the checker is usable on an object that did not come from an entry
     point (the tests do this); when present, the error names the entry point's target and its
     distribution.
+
+    ``contract`` and ``noun`` exist because the same four members are the contract for three
+    entry-point groups. They only ever change the *message*, never what is checked: a scaffold that
+    forgot ``run`` should be told it broke the ``astro_mine.cli.scaffolds`` contract, not sent
+    looking for a verb it never wrote.
     """
     missing = [member for member in REQUIRED_MEMBERS if not hasattr(obj, member)]
     if missing:
         raise InvalidSubcommandError(
-            f"the provider of {verb!r} does not satisfy the astro_mine.cli contract: "
-            f"missing {', '.join(repr(m) for m in missing)}. {_blame(entry)}"
+            f"the provider of {verb!r} does not satisfy the {contract} contract: "
+            f"missing {', '.join(repr(m) for m in missing)}. {_blame(entry, noun)}"
         )
     for member in ("add_arguments", "run"):
         if not callable(getattr(obj, member)):
             raise InvalidSubcommandError(
-                f"the provider of {verb!r} does not satisfy the astro_mine.cli contract: "
-                f"{member!r} is not callable. {_blame(entry)}"
+                f"the provider of {verb!r} does not satisfy the {contract} contract: "
+                f"{member!r} is not callable. {_blame(entry, noun)}"
             )
     return obj  # type: ignore[no-any-return]
 
 
-def _blame(entry: EntryPoint | None) -> str:
+def _blame(entry: EntryPoint | None, noun: str = "verb") -> str:
     """Point at whoever has to fix it — the providing distribution, not the user."""
     if entry is None:
-        return "A verb must provide: " + ", ".join(REQUIRED_MEMBERS) + "."
+        return f"A {noun} must provide: " + ", ".join(REQUIRED_MEMBERS) + "."
     dist = getattr(entry.dist, "name", None)
     origin = f"{entry.value!r} (from {dist!r})" if dist else repr(entry.value)
     return (
         f"Its entry point is {origin}; report this to that package. "
-        "A verb must provide: " + ", ".join(REQUIRED_MEMBERS) + "."
+        f"A {noun} must provide: " + ", ".join(REQUIRED_MEMBERS) + "."
     )

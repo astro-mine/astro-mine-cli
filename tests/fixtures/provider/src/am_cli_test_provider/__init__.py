@@ -7,13 +7,26 @@ it (a module-level marker makes the negative observable in a clean interpreter).
 
 It also carries a worked example of each adapter style, so a component author has something to
 copy rather than a paragraph to interpret.
+
+Since RFC-0011 §7 it proves the same thing about **scaffolds**: this distribution contributes an
+`astro-mine new <kind>` and an `astro-mine plugin new <kind>` with no change to the umbrella, which
+is the acceptance criterion that no first-party scaffold can honestly test — every component in the
+platform is one this repo could have special-cased.
 """
 
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 
-__all__ = ["MALFORMED", "component_main", "demo", "passthrough"]
+__all__ = [
+    "MALFORMED",
+    "component_main",
+    "demo",
+    "doc_scaffold",
+    "passthrough",
+    "plugin_scaffold",
+]
 
 
 class _PerVerb:
@@ -66,8 +79,56 @@ def component_main(argv: list[str]) -> int:
     return 0
 
 
+class _DocScaffold:
+    """**A document kind** — what a component registers into ``astro_mine.cli.scaffolds``.
+
+    Note what is *not* here: ``output`` and ``--force`` are declared by the umbrella before this
+    object is handed the parser, so every kind has the same skeleton and a scaffold only declares
+    what is specific to it. A real one writes a document its own validator accepts; this one writes
+    something recognizable instead, because the point being proved is the routing.
+    """
+
+    name = "demo-doc"
+    help = "a third-party document kind, for testing the scaffold contract"
+
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--marker", default="third-party")
+
+    def run(self, args: argparse.Namespace) -> int:
+        path = Path(args.output)
+        if path.exists() and not args.force:
+            print(f"{path}: file exists (use --force to overwrite)")
+            return 1
+        path.write_text(f"kind: demo-doc\nmarker: {args.marker}\n", encoding="utf-8")
+        print(f"wrote {path}")
+        return 0
+
+
+class _PluginScaffold:
+    """**A plugin kind** — the second group, ``astro_mine.cli.plugin_scaffolds``.
+
+    Two groups rather than one flag on one group, so that listing the kinds for either verb stays
+    a metadata read. This fixture exists to prove a third party can reach both.
+    """
+
+    name = "demo-plugin"
+    help = "a third-party plugin kind, for testing the scaffold contract"
+
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        del parser
+
+    def run(self, args: argparse.Namespace) -> int:
+        target = Path(args.output)
+        target.mkdir(parents=True, exist_ok=True)
+        (target / "pyproject.toml").write_text('name = "demo-plugin"\n', encoding="utf-8")
+        print(f"wrote {target}")
+        return 0
+
+
 demo = _PerVerb()
 passthrough = _Passthrough()
+doc_scaffold = _DocScaffold()
+plugin_scaffold = _PluginScaffold()
 
 #: Resolves fine, satisfies nothing — the packaging bug the umbrella has to report kindly.
 MALFORMED = object()

@@ -68,7 +68,7 @@ what is available.
 
 ## `astro-mine validate` — one command, every authored format
 
-The umbrella owns exactly one verb, and only because no component could: `validate` routes each
+The umbrella owns three verbs, and each only because no component could. `validate` routes each
 document to the component that owns its format (RFC-0011 §6).
 
 ```bash
@@ -86,6 +86,39 @@ guard = "astro_mine.guard.umbrella:validator"
 
 Two claimants is a hard error naming both, and a document nobody claims is refused rather than
 checked against a guessed schema.
+
+## `astro-mine new` and `plugin new` — start from something that already works
+
+The other two routed verbs (RFC-0011 §7). `new` scaffolds an **authored document**; `plugin new`
+scaffolds an installable **package** that extends the platform.
+
+```bash
+astro-mine new                       # what can be scaffolded here, and what to install for the rest
+astro-mine new asset rover.sadf.yaml # written by Fleet, which owns SADF
+astro-mine validate rover.sadf.yaml  # valid on arrival — that is the contract
+```
+
+```bash
+astro-mine plugin new cli ./acme-greet --verb greet   # a package contributing `astro-mine greet`
+pip install -e ./acme-greet && astro-mine greet       # registered and discovered, no PR anywhere
+```
+
+The umbrella writes nothing it does not own: the component that owns an artifact owns its
+template, because it is the one with the schema. It declares `output` and `--force` so every kind
+has the same skeleton, and routes the rest. A kind is contributed exactly as a verb is:
+
+```toml
+[project.entry-points."astro_mine.cli.scaffolds"]         # documents
+asset = "astro_mine.fleet.umbrella:asset_scaffold"
+
+[project.entry-points."astro_mine.cli.plugin_scaffolds"]  # plugin packages
+solver = "astro_mine.allocate.umbrella:solver_scaffold"
+```
+
+Same four members as a verb, same structural contract, same nothing-to-import rule. `cli` is the
+one built-in kind, because `astro_mine.cli` is the one extension group the umbrella hosts. The
+plugin recipes these scaffolds emit are the ones in the platform's
+[plugin-authoring guide](https://github.com/astro-mine/docs/blob/main/guide/how-to/write-a-plugin.md).
 
 ## How a component contributes a verb — no PR to this repo
 
@@ -134,10 +167,15 @@ prefixed — the alias surface only ever shrinks.
 
 ```
 src/astro_mine/cli/        # import path: astro_mine.cli
-  _protocol.py             # the contribution contract
-  _manifest.py             # the static first-party table (verb -> distribution, help)
+  _protocol.py             # the contribution contract, shared by all three groups
+  _manifest.py             # the static first-party tables (verb/kind -> distribution, help)
   _discovery.py            # entry-point enumeration; the only place a provider is imported
   _dispatch.py             # the two-phase parser and the dispatch loop
+  _validators.py           # validator discovery -- the `validate` federation
+  _validate.py             # the built-in `validate` verb
+  _scaffolds.py            # scaffold discovery -- the `new` / `plugin new` federation
+  _new.py                  # the built-in `new` and `plugin` verbs
+  _templates.py            # the one scaffold the umbrella owns (`plugin new cli`)
 tests/                     # mirrors the package layout
   fixtures/provider/       # a third-party distribution, installed by the integration lane
 ```

@@ -49,20 +49,27 @@ The workflow says so at the point where a copy-paste from a sibling would land.
 ```
 src/astro_mine/cli/
   __init__.py     # public surface: __version__, main, build_parser, Subcommand, discover_verbs
-  _protocol.py    # the verb contribution contract + the conformance check
-  _manifest.py    # the static first-party table (verb → distribution, help)
+  _protocol.py    # the contribution contract + the conformance check (all three groups)
+  _manifest.py    # the static first-party tables (verb/kind → distribution, help)
   _discovery.py   # verb enumeration; the only place a provider is imported
   _dispatch.py    # the two-phase parser, built-in verbs, and the dispatch loop
   _validators.py  # the validator contract + discovery (the `validate` federation)
   _validate.py    # the built-in `validate` verb — a router, not a validator
+  _scaffolds.py   # the two scaffold groups + discovery (the `new` federation)
+  _new.py         # the built-in `new` and `plugin new` verbs — routers, not generators
+  _templates.py   # the one scaffold the umbrella owns: `plugin new cli`
   __main__.py     # `python -m astro_mine.cli`
 ```
 
-## The one built-in verb: `validate`
+## The three built-in verbs: `validate`, `new`, `plugin`
 
-Every other verb belongs to a component. `validate` belongs here because it is the only one whose
-job is *"work out who owns this document and ask them"* — and no single component can do that
-without importing its siblings, which the narrow waist forbids (`conventions.md §1.1`).
+Every other verb belongs to a component. These three belong here because all three *route* rather
+than do, and routing is the one job no component can hold without importing its siblings, which the
+narrow waist forbids (`conventions.md §1.1`). `validate` works out who owns a document and asks
+them; `new` and `plugin new` work out who owns a *kind* and ask them. Nothing else belongs in the
+set — a verb that actually does something belongs to the component that does it.
+
+## `validate` — the format's owner owns the checker
 
 It was Core's registered verb at first, and that could never have federated: extending it would
 have meant Core consulting Guard and Mind, i.e. Core importing its own consumers. Moving the verb
@@ -93,6 +100,66 @@ directly.
 The console script `astro-mine` resolves to `astro_mine.cli:main`; that name and target are pinned
 by a test, because RFC-0011's per-component dispatch (`astro-mine studio serve`) is a thin call into
 an already-shipped subcommand and only works if they stay put.
+
+## `new` and `plugin new` — the artifact's owner owns the scaffold
+
+RFC-0011 §7 puts scaffolding in the umbrella because it is a **cross-component authoring concern
+with no natural single-component home**: an asset is Fleet's, a stack spec is Mind's, a SafetySpec
+is Guard's, a solver plugin is Allocate's. `fleet new` is the exemplar; the umbrella generalizes its
+shape and routes each kind to whoever owns it.
+
+**The umbrella generates nothing it does not own.** It has no templating engine and no YAML parser
+— the zero-dependency rule forbids both — so the owning component, which already has the schema,
+writes the bytes. The one exception proves the rule rather than bending it: `plugin new cli`
+scaffolds a package against the `astro_mine.cli` entry-point group, and the umbrella *is* that
+group's owner, exactly as it is the `validate` routing problem's owner.
+
+### Two groups, one contract
+
+| Group | What it scaffolds | Entry-point name |
+|---|---|---|
+| `astro_mine.cli.scaffolds` | an authored **document** (`astro-mine new asset`) | the kind as typed |
+| `astro_mine.cli.plugin_scaffolds` | an installable **plugin package** (`astro-mine plugin new solver`) | the kind as typed |
+
+Both resolve to the **same four members `Subcommand` has** — `name`, `help`, `add_arguments`,
+`run` — checked by the same function, differing only in the group and noun its error message names.
+A second protocol with the same shape under different nouns would have given component authors two
+things to learn and this package two checkers to keep in step. So a component contributes a scaffold
+by writing the object it already knows how to write, and — as with a verb — nothing imports the
+umbrella to do it.
+
+**Why two groups rather than one with a `target` attribute.** Deciding which verb a scaffold belongs
+to by reading an attribute would mean *loading every scaffold* to render `astro-mine new --help`,
+which is the precise cost the two-phase parse exists to avoid. A group name can be filtered on for
+free; an attribute on a loaded object cannot.
+
+**Routing is by name, not by inspection.** Unlike `validate` — which must ask each validator *"is
+this file yours?"*, because a path carries no owner — the user types the kind. So discovery stays a
+metadata read, `astro-mine new` lists every available kind without importing anything, and adding a
+tenth kind needs no change here.
+
+### The two arguments the umbrella owns
+
+Before handing the parser to a scaffold, the umbrella declares `output` (positional) and `--force`.
+Every kind therefore has the same skeleton, and a user who has scaffolded one can scaffold the next
+without re-reading the help. Everything else is the owner's to declare, and a scaffold must not
+re-declare those two.
+
+| Situation | Behaviour |
+|---|---|
+| Two distributions offer one kind | Hard error naming both — which package generated your starting file is provenance |
+| A distribution offers a kind the umbrella owns | Hard error: a built-in cannot be shadowed silently |
+| A first-party kind whose component is absent | Names the install, as a missing verb does |
+| A first-party kind whose component **is installed but offers no scaffold** | Says exactly that. Telling a user to install what they already have would be the umbrella lying about an environment it can see — the case `new world` is in today (G2.11) |
+| A kind nobody has ever advertised | Unknown-kind error listing what is available |
+
+**What the scaffold emits must validate.** A freshly scaffolded document passing straight into
+`astro-mine validate` with no hand-editing is the only acceptance test that means anything — and it
+is a claim each owner keeps, since each owns both the template and the checker. No CI in this repo
+can check it: `astro-mine-cli` installs no components by design. What *is* checked here is that a
+scaffolded `cli` plugin installs into a bare venv, registers, and runs
+(`tests/test_installed_provider.py`), and that a third-party distribution can contribute a kind with
+no change to this package (`tests/fixtures/provider`).
 
 ### Why parsing happens in two phases
 
@@ -161,14 +228,33 @@ passthrough and promote individual verbs later, without the umbrella changing.
 - **A verb returning `None` exits 0.** That is what `sys.exit(None)` means everywhere else in
   Python, and a component that completed its work should not be punished with a crash for following
   the convention.
+- **A scaffold is a `Subcommand`.** RFC-0011 §7 asked for a scaffold contribution group; it did not
+  ask for a second protocol. The four members are the same members, so they are the *same* contract
+  checked by the same function, and a component author learns one shape rather than two. Only the
+  error message's group and noun vary.
+- **`plugin new cli` is a built-in kind**, and the only one. The umbrella hosts the `astro_mine.cli`
+  entry-point group, so it owns that group's scaffold — the identical carve-out that makes
+  `validate` a built-in verb. Without it this package would ship a dispatcher with nothing to
+  dispatch to until eight sibling repos landed, which is the empty-shell problem RFC-0011 §1b
+  already rejected once.
+- **A component that is installed but offers no scaffold is told so**, rather than told to install
+  itself. The probe is an `importlib.metadata` version lookup — free, and no import — and without it
+  the deferred `new world` kind (G2.11) would print an install line to users who already have
+  Worlds. The verb-level degradation path does not draw this distinction; the kind-level one does,
+  because a kind can be absent from a component that is present.
 - **No git tags yet**, so `hatch-vcs` stamps a development version — matching the sibling repos
   during private incubation. The version is *derived*, so it cannot drift.
 
 ### Deferred
 
 - **Shell completion** over the discovered verb set (RFC-0011 leaves it to implementation).
-- **`validate` federation** (RFC §6) and **`plugin new` / `new`** (§7): both now have a dispatcher
-  to build on.
+- **`new world`** — until Worlds ships a `WorldSpec` example and a validator (G2.11,
+  [astro-mine/docs#39](https://github.com/astro-mine/docs/issues/39)). A scaffold whose output
+  nothing can check fails the one acceptance test that matters, so the kind is listed and honestly
+  reported as unavailable rather than shipped early.
+- **The scaffolds themselves**, in every component that owns one. This package ships the contract,
+  the routing, the degradation and the `cli` plugin kind; `asset`, `stack`, `safety` and the six
+  remaining plugin kinds land in their owners' repos, which is the whole point of federating.
 
 ### Owned elsewhere
 
