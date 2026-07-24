@@ -93,20 +93,16 @@ class FirstPartyKind(NamedTuple):
     help: str
 
 
-#: Authored-document kinds → owner (`astro-mine new <kind>`; RFC-0011 §7).
-#:
-#: ``world`` is listed but **not yet registered by anyone**: Worlds has no ``WorldSpec`` on disk
-#: and no validator (G2.11, astro-mine/docs#39), so a `world` scaffold would emit a document
-#: nothing can check — the one thing the acceptance criterion for this feature forbids. Listing it
-#: is still honest, because the missing-kind path distinguishes *"Worlds is not installed"* from
-#: *"Worlds is installed and offers no such scaffold"*, and a user who has Worlds is told the
-#: second thing rather than told to install what they already have.
+#: Authored-document kinds → owner (`astro-mine new <kind>`; RFC-0011 §7). Every one of them is
+#: registered by its owner now that Worlds ships a `WorldSpec` example, a validator and a scaffold
+#: (G2.11, astro-mine/astro-mine-worlds#57) — so this table is once again a description of what the
+#: platform offers rather than a promise about part of it.
 FIRST_PARTY_KINDS: MappingProxyType[str, FirstPartyKind] = MappingProxyType(
     {
         "asset": FirstPartyKind("astro-mine-fleet", "a SADF asset (the exemplar: `fleet new`)"),
         "stack": FirstPartyKind("astro-mine-mind", "an autonomy stack spec"),
         "safety": FirstPartyKind("astro-mine-guard", "a SafetySpec"),
-        "world": FirstPartyKind("astro-mine-worlds", "a WorldSpec (not yet offered — G2.11)"),
+        "world": FirstPartyKind("astro-mine-worlds", "a WorldSpec"),
     }
 )
 

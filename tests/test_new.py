@@ -157,10 +157,14 @@ def test_an_installed_component_that_offers_no_scaffold_is_not_told_to_install_i
 ) -> None:
     """The third case, and the reason the missing-kind path probes at all.
 
-    `new world` is in the table as a promise (Worlds owns WorldSpec) but nothing registers it yet —
-    G2.11. Telling a user who *has* Worlds installed to `pip install astro-mine-worlds` would be
-    the umbrella lying about an environment it can see. The table entry is repointed at this
-    package because it is the one distribution guaranteed to be installed while these tests run.
+    Telling a user who *has* a component installed to `pip install` it would be the umbrella lying
+    about an environment it can see. The case that motivated this was `new world` while Worlds
+    still registered no scaffold (G2.11, since closed); the rule outlives it, because any component
+    can be present while offering no scaffold for a kind the table promises.
+
+    The table entry is repointed at this package because it is the one distribution guaranteed to
+    be installed while these tests run — the assertion is about the *behaviour*, not about which
+    component happens to be lagging today.
     """
     assert FIRST_PARTY_KINDS["world"].distribution == "astro-mine-worlds"
     monkeypatch.setattr(
