@@ -50,7 +50,7 @@ Available from components that are not installed here:
   run       run a scenario in the simulator [astro-mine-sim]
   ...
 
-Every component CLI also works directly (`astro-mine-bench score`, `fleet validate`).
+Every component CLI also works directly (`astro-mine-bench score`, `astro-mine-fleet validate`).
 `astro-mine <verb> --help` shows a verb's own options.
 ```
 
@@ -65,6 +65,27 @@ $ astro-mine train
 A missing component should say what is missing — never a traceback, never a bare "unknown
 command" (RFC-0011 §4). A verb nobody advertises *is* an unknown command, and says so, listing
 what is available.
+
+## `astro-mine validate` — one command, every authored format
+
+The umbrella owns exactly one verb, and only because no component could: `validate` routes each
+document to the component that owns its format (RFC-0011 §6).
+
+```bash
+astro-mine validate anchor.safety.yaml lunar_prospecting.yaml   # Guard's checker, then Mind's
+```
+
+It parses nothing itself — it asks each installed validator "is this yours?" and hands the file to
+whoever says yes, so the schema knowledge stays with the owner and a tenth format needs no change
+here. A component registers a checker the same way it registers a verb:
+
+```toml
+[project.entry-points."astro_mine.cli.validators"]
+guard = "astro_mine.guard.umbrella:validator"
+```
+
+Two claimants is a hard error naming both, and a document nobody claims is refused rather than
+checked against a guessed schema.
 
 ## How a component contributes a verb — no PR to this repo
 
