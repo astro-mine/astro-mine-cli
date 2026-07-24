@@ -150,7 +150,7 @@ re-declare those two.
 | Two distributions offer one kind | Hard error naming both — which package generated your starting file is provenance |
 | A distribution offers a kind the umbrella owns | Hard error: a built-in cannot be shadowed silently |
 | A first-party kind whose component is absent | Names the install, as a missing verb does |
-| A first-party kind whose component **is installed but offers no scaffold** | Says exactly that. Telling a user to install what they already have would be the umbrella lying about an environment it can see — the case `new world` is in today (G2.11) |
+| A first-party kind whose component **is installed but offers no scaffold** | Says exactly that. Telling a user to install what they already have would be the umbrella lying about an environment it can see |
 | A kind nobody has ever advertised | Unknown-kind error listing what is available |
 
 **What the scaffold emits must validate.** A freshly scaffolded document passing straight into
@@ -238,20 +238,17 @@ passthrough and promote individual verbs later, without the umbrella changing.
   dispatch to until eight sibling repos landed, which is the empty-shell problem RFC-0011 §1b
   already rejected once.
 - **A component that is installed but offers no scaffold is told so**, rather than told to install
-  itself. The probe is an `importlib.metadata` version lookup — free, and no import — and without it
-  the deferred `new world` kind (G2.11) would print an install line to users who already have
-  Worlds. The verb-level degradation path does not draw this distinction; the kind-level one does,
-  because a kind can be absent from a component that is present.
+  itself. The probe is an `importlib.metadata` version lookup — free, and no import. The case that
+  motivated it was `new world` while Worlds still had no `WorldSpec` scaffold (G2.11, since closed
+  by [astro-mine/astro-mine-worlds#57](https://github.com/astro-mine/astro-mine-worlds/issues/57)),
+  and the rule outlives it: the verb-level degradation path does not draw this distinction, and the
+  kind-level one must, because a kind can be absent from a component that is present.
 - **No git tags yet**, so `hatch-vcs` stamps a development version — matching the sibling repos
   during private incubation. The version is *derived*, so it cannot drift.
 
 ### Deferred
 
 - **Shell completion** over the discovered verb set (RFC-0011 leaves it to implementation).
-- **`new world`** — until Worlds ships a `WorldSpec` example and a validator (G2.11,
-  [astro-mine/docs#39](https://github.com/astro-mine/docs/issues/39)). A scaffold whose output
-  nothing can check fails the one acceptance test that matters, so the kind is listed and honestly
-  reported as unavailable rather than shipped early.
 - **The scaffolds themselves**, in every component that owns one. This package ships the contract,
   the routing, the degradation and the `cli` plugin kind; `asset`, `stack`, `safety` and the six
   remaining plugin kinds land in their owners' repos, which is the whole point of federating.
