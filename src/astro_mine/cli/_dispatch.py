@@ -28,6 +28,8 @@ from astro_mine.cli._discovery import (
     load_verb,
 )
 from astro_mine.cli._manifest import FIRST_PARTY_VERBS, install_hint
+from astro_mine.cli._new import new as _new_verb
+from astro_mine.cli._new import plugin as _plugin_verb
 from astro_mine.cli._protocol import InvalidSubcommandError, Subcommand
 from astro_mine.cli._validate import validate as _validate_verb
 
@@ -41,14 +43,19 @@ _DESCRIPTION = "The Astro-Mine umbrella CLI — one front door to the platform's
 #: unable to tell "I am misconfigured" from "the run failed".
 _USAGE_ERROR = 2
 
-#: Verbs the umbrella owns itself. There is exactly one, and it is here for a reason rather than
-#: for convenience: `validate` routes a document to whichever component owns its format, which no
-#: single component can do without importing its siblings (RFC-0011 §6; see _validate.py).
+#: Verbs the umbrella owns itself. Each is here for a reason rather than for convenience: all three
+#: *route* rather than do, and routing is the one job no component can hold without importing its
+#: siblings (`conventions.md §1.1`). `validate` sends a document to whoever owns its format
+#: (RFC-0011 §6; see _validate.py); `new` and `plugin new` send a scaffold request to whoever owns
+#: the kind (RFC-0011 §7; see _new.py). Nothing else belongs here — a verb that *does* something
+#: belongs to the component that does it.
 #:
 #: Built-ins are seeded like Allocate's solver registry seeds CP-SAT — and collide the same way: a
 #: distribution advertising a verb that shadows one is a hard error naming both, never a silent
-#: winner. Importing this module costs nothing external; only running the verb loads a validator.
-_BUILTIN_VERBS: dict[str, Subcommand] = {_validate_verb.name: _validate_verb}
+#: winner. Importing this module costs nothing external; only running a verb loads a provider.
+_BUILTIN_VERBS: dict[str, Subcommand] = {
+    verb.name: verb for verb in (_validate_verb, _new_verb, _plugin_verb)
+}
 
 
 def build_parser(verbs: Mapping[str, EntryPoint] | None = None) -> argparse.ArgumentParser:

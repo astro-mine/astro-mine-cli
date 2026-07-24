@@ -23,6 +23,12 @@ pointing at an object satisfying :class:`~astro_mine.cli.Subcommand` (``name``, 
 component to *list* it — discovery reads installed metadata, and a provider is imported only when
 its verb actually runs. A third party gains an ``astro-mine <verb>`` the same way, with no change
 to this package.
+
+**Two more groups, the same contract.** ``astro_mine.cli.validators`` federates `astro-mine
+validate` (RFC-0011 §6), and ``astro_mine.cli.scaffolds`` / ``astro_mine.cli.plugin_scaffolds``
+federate `astro-mine new` and `astro-mine plugin new` (§7). All three verbs are *routers* — the
+only kind of verb that can live here, since deciding which component owns a document or a kind is
+the one job no component can do without importing its siblings.
 """
 
 from __future__ import annotations
@@ -36,14 +42,24 @@ from astro_mine.cli._discovery import (
 )
 from astro_mine.cli._dispatch import build_parser, main
 from astro_mine.cli._protocol import InvalidSubcommandError, Subcommand
+from astro_mine.cli._scaffolds import (
+    DOCUMENT_SCAFFOLD_GROUP,
+    PLUGIN_SCAFFOLD_GROUP,
+    ScaffoldCollisionError,
+    discover_scaffolds,
+)
 
 __all__ = [
+    "DOCUMENT_SCAFFOLD_GROUP",
+    "PLUGIN_SCAFFOLD_GROUP",
     "VERB_ENTRY_POINT_GROUP",
     "InvalidSubcommandError",
+    "ScaffoldCollisionError",
     "Subcommand",
     "VerbCollisionError",
     "__version__",
     "build_parser",
+    "discover_scaffolds",
     "discover_verbs",
     "main",
 ]

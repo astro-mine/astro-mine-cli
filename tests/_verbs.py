@@ -73,8 +73,11 @@ NOT_CALLABLE = _NotCallable()
 MALFORMED = object()
 
 
-def make_entry_point(name: str, attribute: str):  # type: ignore[no-untyped-def]
+def make_entry_point(name: str, attribute: str, group: str | None = None):  # type: ignore[no-untyped-def]
     """An EntryPoint pointing at this module — the fast lane's stand-in for an installed package.
+
+    ``group`` defaults to the verb group; the scaffold groups pass their own, since the contract
+    they bind to is the same one and only the group name differs.
 
     Imported lazily so this module stays importable without importlib.metadata in scope.
     """
@@ -82,4 +85,4 @@ def make_entry_point(name: str, attribute: str):  # type: ignore[no-untyped-def]
 
     from astro_mine.cli import VERB_ENTRY_POINT_GROUP
 
-    return EntryPoint(name=name, value=f"_verbs:{attribute}", group=VERB_ENTRY_POINT_GROUP)
+    return EntryPoint(name=name, value=f"_verbs:{attribute}", group=group or VERB_ENTRY_POINT_GROUP)
