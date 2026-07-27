@@ -45,6 +45,10 @@ __all__ = ["new", "plugin"]
 
 _USAGE_ERROR = 2
 
+#: What a user types to ask for help. Spelled out because `plugin new`'s tail is an
+#: :data:`argparse.REMAINDER`, which hands these through verbatim instead of acting on them.
+_HELP_FLAGS = frozenset({"-h", "--help"})
+
 #: `new` has no built-in kinds — every document belongs to a component. Only `plugin new` does,
 #: and only one (see :mod:`astro_mine.cli._templates`).
 _NO_BUILTINS: Mapping[str, Subcommand] = MappingProxyType({})
@@ -271,7 +275,11 @@ class _Plugin:
                 file=sys.stderr,
             )
             return _USAGE_ERROR
-        if not args.rest:
+        # `--help` is claimed here rather than by argparse, because REMAINDER stops option
+        # processing: without this the flag arrives as the kind positional and comes back as
+        # `unknown kind '--help'`, which reads as the tool being confused about the most standard
+        # flag there is. `astro-mine new --help` prints help and exits 0; so does this.
+        if not args.rest or args.rest[0] in _HELP_FLAGS:
             print(self._scaffolder.listing())
             return 0
         return self._scaffolder.dispatch(args.rest[0], args.rest[1:])
