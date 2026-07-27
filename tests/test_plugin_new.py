@@ -53,6 +53,30 @@ def test_plugin_new_with_no_kind_lists_rather_than_erroring(
     assert "usage: astro-mine plugin new <kind>" in capsys.readouterr().out
 
 
+@pytest.mark.parametrize("flag", ["-h", "--help"])
+def test_asking_for_help_lists_the_kinds_rather_than_reading_it_as_one(
+    flag: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`--help` must not arrive as a kind name.
+
+    The tail is an `argparse.REMAINDER`, so argparse hands the flag through instead of acting on
+    it; before this was claimed explicitly the verb answered `unknown kind '--help'` and exited 2,
+    while its sibling `astro-mine new --help` printed help and exited 0.
+    """
+    assert plugin.run(argparse.Namespace(action="new", rest=[flag])) == 0
+    captured = capsys.readouterr()
+    assert "usage: astro-mine plugin new <kind>" in captured.out
+    assert captured.err == ""
+
+
+def test_a_kinds_own_help_still_reaches_the_kind(capsys: pytest.CaptureFixture[str]) -> None:
+    """Only a *leading* help flag is the verb's. `plugin new cli --help` is the scaffold's."""
+    with pytest.raises(SystemExit) as exit_info:
+        plugin.run(argparse.Namespace(action="new", rest=["cli", "--help"]))
+    assert exit_info.value.code == 0
+    assert "astro-mine plugin new cli" in capsys.readouterr().out
+
+
 def test_an_unknown_action_is_refused(capsys: pytest.CaptureFixture[str]) -> None:
     """`new` is the only action today. An unrecognized one is a usage error, not a silent no-op."""
     assert plugin.run(argparse.Namespace(action="delete", rest=[])) == 2
