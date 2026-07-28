@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "astro-mine-cli"
 dynamic = ["version"]
-description = "Astro-Mine-CLI — the discoverable umbrella CLI: `astro-mine <verb>`, a near-zero-dependency dispatcher over the astro_mine.cli entry-point group."
+description = "Astro-Mine-CLI — the Astro-Mine command line: one executable, `astro-mine <component> <verb>`, over the astro-mine-platform library."
 readme = "README.md"
 requires-python = ">=3.12"
 license = "Apache-2.0"
@@ -34,15 +34,16 @@ classifiers = [
 #
 # What §1a actually protected is kept, and by a mechanism that still works: you pay the import
 # cost of the command you ran and nothing else. `astro-mine --help` imports no component
-# (tests/test_laziness.py asserts the negative), because the top-level listing is static strings
+# (tests/test_dispatch_all_verbs.py asserts the negative), because the top-level listing is static strings
 # and the dispatcher imports exactly one module -- the one the user named.
 #
 # Adding a SECOND dependency here is a design change, not a convenience. Take it through the RFC.
 dependencies = ["astro-mine-platform"]
 
 [project.scripts]
-# The single umbrella entry point. `astro-mine <verb>` is the discoverable surface
-# (conventions.md §13, normative); every component CLI keeps working when invoked directly.
+# The ONE executable this distribution installs, and the only one the platform has.
+# `astro-mine <component> <verb>` (conventions.md §13, normative, as amended by
+# astro-mine-cli#12): the per-component binaries it used to sit alongside are gone.
 astro-mine = "astro_mine.cli:main"
 
 [project.urls]
@@ -51,16 +52,14 @@ Documentation = "https://github.com/astro-mine/docs"
 Issues = "https://github.com/astro-mine/astro-mine-cli/issues"
 
 [tool.uv.sources]
-# LOCAL PATH WHILE THE PAIRED PR IS OPEN. astro-mine-cli#12 and astro-mine-platform#1 are two
-# halves of one change: the platform must stop shipping `astro_mine/cli/` before this package can
-# depend on it, because both install into the PEP-420 `astro_mine` namespace and would otherwise
-# land two distributions' files on one import path.
+# Pinned to the commit that removed the platform's CLI surface (astro-mine-platform#1). A
+# **rev**, not a branch: `uv.lock` records the resolved commit either way, but a rev makes the
+# pin readable without opening the lock, and the platform publishes no tags yet.
 #
-# So this points at the sibling checkout, which is the only way to exercise all 50 verbs before
-# either PR merges. FLIP TO A GIT PIN BEFORE MERGE -- the pattern every other consumer uses:
-#
-#   astro-mine-platform = { git = "https://github.com/astro-mine/astro-mine-platform.git", rev = "<merged sha>" }
-astro-mine-platform = { path = "../astro-mine-platform", editable = true }
+# This must not float. The two repos are one change split in half -- the platform stops
+# shipping `astro_mine/cli/`, this package starts providing it -- so a pin that moved could
+# resolve a platform that still installs files at this package's import path.
+astro-mine-platform = { git = "https://github.com/astro-mine/astro-mine-platform.git", rev = "df45842518c7e53c1110be1f5549d103e2db0105" }
 
 [dependency-groups]
 dev = [
