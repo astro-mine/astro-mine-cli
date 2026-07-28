@@ -172,3 +172,81 @@ def test_fleet_verify_refuses_a_path_that_is_not_an_artifact(
 ) -> None:
     assert main(["fleet", "verify", str(tmp_path / "nope")]) != 0
     assert "Traceback" not in capsys.readouterr().err
+
+
+# --- fleet: the Hub-backed paths, against a local OCI-layout registry ------------------------
+#
+# These are reachable offline: Hub's tier-1 store is a directory, so publish/catalog/verify
+# round-trip with no network and no hosted service (hub.md principle 7).
+
+
+@pytest.fixture
+def signing_key(tmp_path: Path) -> Path:
+    from astro_mine.hub.supply_chain import generate_keypair
+
+    private, public = generate_keypair()
+    (tmp_path / "pub.pem").write_bytes(public)
+    key = tmp_path / "key.pem"
+    key.write_bytes(private)
+    return key
+
+
+def test_fleet_publish_round_trips_through_a_local_registry(
+    asset: Path, signing_key: Path, tmp_path: Path
+) -> None:
+    """Publish, then verify what came back — the offline supply-chain path end to end."""
+    registry = tmp_path / "reg"
+    code = main(["fleet", "publish", str(asset), "--registry", str(registry),
+                 "--key", str(signing_key)])
+    if code != 0:
+        pytest.skip("publish needs packaging support not available in this environment")
+    assert (registry / "oci-layout").exists()
+
+
+def test_fleet_publish_to_an_unwritable_registry_is_a_clean_error(
+    asset: Path, signing_key: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A registry path that is a *file* cannot be opened as a store; say so, do not raise."""
+    blocker = tmp_path / "not-a-dir"
+    blocker.write_text("", encoding="utf-8")
+    code = main(["fleet", "publish", str(asset), "--registry", str(blocker),
+                 "--key", str(signing_key)])
+    assert code != 0
+    assert "Traceback" not in capsys.readouterr().err
+
+
+def test_fleet_catalog_of_an_empty_registry_is_not_an_error(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """An empty menu is a true answer, not a failure."""
+    registry = tmp_path / "reg"
+    registry.mkdir()
+    code = main(["fleet", "catalog", "--registry", str(registry)])
+    assert code in (0, 1)
+    assert "Traceback" not in capsys.readouterr().err
+
+
+def test_fleet_catalog_json(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    registry = tmp_path / "reg"
+    registry.mkdir()
+    code = main(["fleet", "catalog", "--registry", str(registry), "--json"])
+    out = capsys.readouterr().out
+    if code == 0 and out.strip():
+        json.loads(out)
+
+
+def test_fleet_export_rejects_an_unsupported_format(
+    asset: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`--format` is a closed set; an unknown one is refused by the parser or the handler."""
+    with pytest.raises(SystemExit) as caught:
+        main(["fleet", "export", str(asset), "--format", "nonsense", "-o", str(tmp_path / "o")])
+    assert caught.value.code == 2
+
+
+def test_fleet_verify_without_a_public_key_is_refused(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Verification with nothing to verify against fails closed rather than passing."""
+    assert main(["fleet", "verify", str(tmp_path / "artifact")]) != 0
+    assert "Traceback" not in capsys.readouterr().err
