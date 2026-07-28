@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from astro_mine.fleet import __version__, cli
+from astro_mine.fleet import __version__
 
 from .conftest import INVALID_SADF, VALID_SADF
 

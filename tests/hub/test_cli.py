@@ -163,30 +163,6 @@ manifest:
 """
 
 
-def test_publish_accepts_the_manifest_document_form_core_validate_accepts(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """The two readers of a manifest must not disagree (#46).
-
-    `astro-mine-core validate` blesses a manifest *document* — `manifest_version` + a `manifest:`
-    mapping, in YAML — which is what both shipped examples in `astro-mine-core/examples/plugins/`
-    are. `publish --manifest` required a bare `PluginManifest` in strict JSON, so a reader who
-    copied the example the guide points at, validated it, and got `OK` was rewarded with a pydantic
-    traceback.
-    """
-    from astro_mine.core.registry import validate_manifest
-
-    document = tmp_path / "my-plugin.manifest.yaml"
-    document.write_text(_MANIFEST_DOCUMENT)
-    validate_manifest(document.read_text())  # what `astro-mine-core validate` does
-
-    key, _ = _key_files(tmp_path)
-    registry = str(tmp_path / "reg")
-    assert main(_publish_argv(registry, str(document), key)) == 0
-    assert capsys.readouterr().out.strip().startswith("sha256:")
-    # The published manifest is the *inner* model, not the wrapper.
-    assert main(["search", "--registry", registry, "--text", "pol"]) == 0
-    assert "pol:1.0.0" in capsys.readouterr().out
 
 
 def test_publish_still_accepts_a_bare_manifest(

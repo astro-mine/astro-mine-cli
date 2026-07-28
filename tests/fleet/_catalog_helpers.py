@@ -7,9 +7,7 @@ copies of the same assertions drifting apart.
 
 from __future__ import annotations
 
-import pytest
 
-from astro_mine.core.registry.enums import PluginKind
 
 from astro_mine.core.sadf import SadfDocument, load_sadf
 
@@ -19,18 +17,11 @@ from astro_mine.core.sadf.model import GeometryRef
 
 from astro_mine.fleet._core import canonical_json
 
-from astro_mine.fleet.capabilities import CapabilityError
 
-from astro_mine.fleet.catalog import (
-    MenuEntry,
-    asset_preview,
-    list_menu,
-    materialize_preview,
-)
 
 from astro_mine.fleet.library import load_reference
 
-from astro_mine.fleet.packaging.hub import HubError, publish_asset
+from astro_mine.fleet.packaging.hub import publish_asset
 
 from astro_mine.hub.supply_chain import generate_keypair
 

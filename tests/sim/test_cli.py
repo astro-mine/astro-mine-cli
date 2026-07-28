@@ -9,6 +9,8 @@ entry paths reach the same CLI; and ``run`` degrades with an actionable message 
 
 from __future__ import annotations
 
+from astro_mine.cli import sim as cli
+
 # Migrated from astro-mine-platform, where these drove `astro-mine-sim <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine sim <verb>`.
@@ -197,7 +199,6 @@ def test_run_records_when_content_resolves(
     registry; here we mock the three boundaries to verify the CLI's orchestration end-to-end, since
     the anchor's published content is gated (#30/#56).
     """
-    import astro_mine.cli.sim as cli
     import astro_mine.sim.bench as simbench
     import astro_mine.sim.runtime as runtime
 
@@ -235,7 +236,6 @@ def test_run_warns_when_a_pinned_provider_did_not_rebuild(
     `run` warns and proceeds rather than refusing: this is the library tier, and recording a partial
     run is a legitimate ask. The *scoring* path refuses instead, because a scorecard is a claim.
     """
-    import astro_mine.cli.sim as cli
     import astro_mine.sim.bench as simbench
     import astro_mine.sim.runtime as runtime
     from astro_mine.sim.runtime.content import UnresolvedProvider
@@ -351,7 +351,6 @@ def test_unfurnished_geometry_names_the_two_knobs(
     Previously a `SpiceGeometryError` traceback four frames deep inside the illumination model,
     which reads as "this is broken" rather than "you have not supplied kernels".
     """
-    import astro_mine.cli.sim as cli
     import astro_mine.spice as spice
 
     monkeypatch.delenv("ASTRO_MINE_SPICE_METAKERNEL", raising=False)

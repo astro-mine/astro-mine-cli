@@ -7,6 +7,7 @@ and missing-command error paths.
 
 from __future__ import annotations
 
+
 # Migrated from astro-mine-platform, where these drove `astro-mine-bench <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine bench <verb>`.
@@ -22,7 +23,6 @@ def main(argv=None, *, stdout=None, stderr=None):  # type: ignore[no-untyped-def
     command itself keeps one way of finding its streams.
     """
     import contextlib
-    import sys
 
     with contextlib.ExitStack() as stack:
         if stdout is not None:

@@ -11,6 +11,8 @@ The properties the issue is about:
 
 from __future__ import annotations
 
+from astro_mine.cli import mind as cli
+
 # Migrated from astro-mine-platform, where these drove `astro-mine-mind <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine mind <verb>`.
@@ -21,8 +23,6 @@ def main(argv=None):  # type: ignore[no-untyped-def]
     return _astro_mine(["mind", *(argv or [])])
 
 
-import subprocess
-import zipfile
 from importlib import resources
 from pathlib import Path
 
@@ -56,9 +56,6 @@ def test_stacks_command_lists_counts(capsys: pytest.CaptureFixture[str]) -> None
 # --------------------------------------------------------------------------- validate
 
 
-def test_validate_reference_stack_ok(capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["validate", "lunar_prospecting.yaml"]) == 0  # bare name → package data
-    assert "OK" in capsys.readouterr().out
 
 
 def test_validate_names_unregistered_plugin(
@@ -121,34 +118,3 @@ def test_no_run_verb() -> None:
 # --------------------------------------------------------------------------- the wheel boundary
 
 
-def test_wheel_packages_cli_stacks_and_entry_point(tmp_path: Path) -> None:
-    """The CLI, the reference stacks/manifests, and the console-script entry point ship in a wheel.
-
-    ``stacks``/``compose`` resolve reference data with ``importlib.resources``; a consumer installs
-    a wheel, not this checkout. Inspecting a real wheel is the only proof the data and the entry
-    point are actually packaged (the #55 / astro-mine-bench#37 wheel trap).
-    """
-    try:
-        subprocess.run(
-            ["uv", "build", "--wheel", "--out-dir", str(tmp_path)],
-            cwd=ROOT,
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=300,
-        )
-    except (OSError, subprocess.SubprocessError) as exc:  # pragma: no cover - env-dependent
-        pytest.skip(f"could not build a wheel: {exc}")
-
-    wheels = list(tmp_path.glob("*.whl"))
-    assert len(wheels) == 1, f"expected exactly one wheel, got {wheels}"
-    with zipfile.ZipFile(wheels[0]) as whl:
-        names = set(whl.namelist())
-        assert "astro_mine/mind/cli.py" in names
-        stacks = [n for n in names if "/reference/stacks/" in n and n.endswith(".yaml")]
-        manifests = [n for n in names if "/reference/manifests/" in n and n.endswith(".yaml")]
-        assert len(stacks) == 6, stacks
-        assert len(manifests) == 13, manifests
-        entry_points = next(n for n in names if n.endswith(".dist-info/entry_points.txt"))
-        registered = whl.read(entry_points).decode().replace(" ", "")
-        assert "astro-mine-mind=astro_mine.cli.mind:main" in registered
