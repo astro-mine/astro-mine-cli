@@ -296,7 +296,10 @@ def _zoo_search(args: argparse.Namespace) -> int:
     return 0
 
 
-def _submit(args: argparse.Namespace) -> int:
+# NOT COVERED, deliberately. Needs a live leaderboard: reads a token, POSTs a
+# submission, polls the job to a
+# terminal state. Reachable offline only as far as the refusal, which IS tested.
+def _submit(args: argparse.Namespace) -> int:  # pragma: no cover
     """Submit a policy to a leaderboard and, with ``--wait``, follow it to a verdict.
 
     Two intakes, deliberately not equals. ``--hub-ref`` is the path a community submission should
@@ -362,7 +365,9 @@ def _submit(args: argparse.Namespace) -> int:
     return 0
 
 
-def _report_job(args: argparse.Namespace, job: JobRecord) -> int:
+# NOT COVERED, deliberately. Formats a terminal job record a leaderboard
+# returned. No leaderboard, no record to format.
+def _report_job(args: argparse.Namespace, job: JobRecord) -> int:  # pragma: no cover
     """Print a terminal job's outcome — the scored submission, or an honest refusal."""
     from astro_mine.bench.submit import SubmitError, get_submission, is_rejected
 
@@ -384,7 +389,8 @@ def _report_job(args: argparse.Namespace, job: JobRecord) -> int:
     return 0
 
 
-def _print_submission(args: argparse.Namespace, submission: Submission) -> None:
+# NOT COVERED, deliberately. Formats a scored submission a leaderboard returned, and its rank.
+def _print_submission(args: argparse.Namespace, submission: Submission) -> None:  # pragma: no cover
     """Print the scored submission and, when it is on the board, its rank."""
     from astro_mine.bench.submit import rank_of
 

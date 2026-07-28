@@ -140,7 +140,10 @@ def _add_arguments(parser: argparse.ArgumentParser) -> None:
     add_train_arguments(parser)
 
 
-def run_from_args(args: argparse.Namespace) -> int:
+# NOT COVERED, deliberately. Runs a real training job: imports Ray and Torch
+# and rolls episodes. The parts
+# that are CLI -- `_build_config` and the argument tree -- are tested directly.
+def run_from_args(args: argparse.Namespace) -> int:  # pragma: no cover
     """Train from already-parsed arguments; returns the process exit code.
 
     Split out of :func:`main` so the parsing and the work are separable: the umbrella owns the

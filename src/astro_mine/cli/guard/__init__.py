@@ -210,7 +210,7 @@ def _cmd_falsify(args: argparse.Namespace) -> int:
     try:
         from astro_mine.guard.audit.sink import CollectingSink
         from astro_mine.guard.wrap import CoreConfig, PolicyShield
-    except ImportError:
+    except ImportError:  # pragma: no cover -- needs the Rust core absent; CI builds it
         print(
             "\nshield verification skipped: the Rust safety core (astro_mine.guard._core) is not "
             "built.\n  Build it with:  maturin develop --release   (or `uv sync`)\n"

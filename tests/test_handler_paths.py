@@ -174,3 +174,36 @@ def test_core_validate_names_the_kind_it_was_told(tmp_path: Path) -> None:
     doc = tmp_path / "a.yaml"
     assert main(["new", "asset", str(doc)]) == 0
     assert main(["core", "validate", "--kind", "objective", str(doc)]) == 1
+
+
+# --- routers: the branches a happy path does not reach --------------------------------------
+
+
+def test_plugin_rejects_an_action_that_is_not_new(capsys: pytest.CaptureFixture[str]) -> None:
+    """`plugin` has exactly one action. Anything else names what is available."""
+    assert main(["plugin", "list"]) == 2
+    assert "unknown action" in capsys.readouterr().err
+
+
+def test_a_third_party_kind_shadowing_a_built_in_is_refused(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    """A collision is reported through the verb, not just raised out of discovery.
+
+    `plugin new` owns the `cli` kind itself, so a package claiming it is the case the
+    built-in-shadowing branch exists for.
+    """
+    import astro_mine.cli._scaffolds as scaffolds
+    from _verbs import make_entry_point
+
+    real = scaffolds.discover_scaffolds
+
+    def shadowed(group: str, entries=None):  # type: ignore[no-untyped-def]
+        return dict(real(group, entries=[make_entry_point("cli", "ECHO", group)]))
+
+    monkeypatch.setattr(scaffolds, "discover_scaffolds", shadowed)
+    monkeypatch.setattr("astro_mine.cli._new.discover_scaffolds", shadowed)
+    assert main(["plugin", "new", "cli", str(tmp_path / "x")]) == 2
+    assert "shadows" in capsys.readouterr().err
+
+
