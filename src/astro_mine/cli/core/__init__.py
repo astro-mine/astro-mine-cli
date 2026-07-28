@@ -502,7 +502,6 @@ command = _Command()
 
 
 from collections.abc import Sequence
-from astro_mine.core.cli import KindError, _cmd_validate, resolve_kind
 
 
 class _CoreValidator:

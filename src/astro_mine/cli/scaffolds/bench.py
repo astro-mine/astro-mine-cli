@@ -147,14 +147,14 @@ class _RunnerScaffold:
         parser.add_argument("--module", help="import package (default: distribution, `-` as `_`)")
 
     def run(self, args: argparse.Namespace) -> int:
-        from astro_mine.bench.baseline._registry import _BUILTINS
+        from astro_mine.bench.baseline import BUILTIN_RUNNERS
 
         target = Path(args.output)
         distribution = args.distribution or target.name
         module = args.module or re.sub(r"[-.]", "_", distribution)
         runner = args.runner
 
-        if runner in _BUILTINS:
+        if runner in BUILTIN_RUNNERS:
             print(
                 f"astro-mine plugin new runner: {runner!r} is a built-in runner id — a built-in "
                 f"always wins resolution, so this plugin would install, register, and never be "

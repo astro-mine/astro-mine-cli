@@ -68,8 +68,8 @@ from astro_mine.bench.content import (
     fetch_scenario_content,
     resolve_store_path,
 )
-from astro_mine.bench.leaderboard._jobs import JobRecord
-from astro_mine.bench.leaderboard._models import Submission
+from astro_mine.bench.leaderboard import JobRecord
+from astro_mine.bench.leaderboard import Submission
 from astro_mine.bench.metrics import Scorecard
 from astro_mine.bench.submit import TOKEN_ENV, SubmitError
 from astro_mine.bench.zoo import (

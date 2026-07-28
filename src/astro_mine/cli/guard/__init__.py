@@ -380,7 +380,6 @@ class _Command:
 command = _Command()
 
 
-from astro_mine.guard.cli import _cmd_validate, main
 
 
 class _GuardValidator:

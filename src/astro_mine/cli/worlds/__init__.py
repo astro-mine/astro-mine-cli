@@ -164,7 +164,6 @@ class _Command:
 command = _Command()
 
 
-from astro_mine.worlds.cli import _cmd_validate, main
 
 
 #: The root properties ``WorldSpec`` declares with no default — the claim key for

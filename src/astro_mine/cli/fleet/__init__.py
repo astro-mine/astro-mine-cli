@@ -54,7 +54,7 @@ from astro_mine.core.registry import PluginManifest, PluginRegistry, RegistryErr
 from astro_mine.core.sadf import SadfDocument, SadfError, load_sadf, validate_sadf
 from astro_mine.core.sadf.enums import FidelityTier
 from astro_mine.fleet import __version__, exporters, fidelity, importers
-from astro_mine.fleet._core import CORE_INTERFACES, canonical_json
+from astro_mine.fleet import CORE_INTERFACES, canonical_json
 from astro_mine.fleet.exporters import ExportResult
 from astro_mine.fleet.geometry import GeometryError
 from astro_mine.fleet.lint import lint_asset

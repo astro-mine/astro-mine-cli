@@ -28,7 +28,7 @@ import yaml
 
 from astro_mine.core.registry import ManifestDocument, PluginManifest, validate_manifest
 from astro_mine.core.registry.loader import ManifestValidationError
-from astro_mine.hub.client._client import HubClient, catalog_from_registry
+from astro_mine.hub.client import HubClient, catalog_from_registry
 from astro_mine.hub.registry import (
     ARTIFACT_KINDS,
     ArtifactNotFound,

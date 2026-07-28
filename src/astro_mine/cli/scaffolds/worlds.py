@@ -144,14 +144,14 @@ class _FieldModelScaffold:
         parser.add_argument("--module", help="import package (default: distribution, `-` as `_`)")
 
     def run(self, args: argparse.Namespace) -> int:
-        from astro_mine.worlds.illumination._registry import _BUILTINS
+        from astro_mine.worlds.illumination import BUILTIN_FIELD_MODELS
 
         target = Path(args.output)
         distribution = args.distribution or target.name
         module = args.module or re.sub(r"[-.]", "_", distribution)
         backend = args.backend
 
-        if backend in _BUILTINS:
+        if backend in BUILTIN_FIELD_MODELS:
             print(
                 f"astro-mine plugin new field-model: {backend!r} is a built-in backend id and "
                 f"cannot be shadowed — advertising it is a hard error naming both claimants, "
@@ -195,7 +195,7 @@ field_model_scaffold = _FieldModelScaffold()
 
 
 from collections.abc import Sequence
-from astro_mine.worlds.cli import _cmd_validate, main
+from astro_mine.cli.worlds import _cmd_validate
 
 
 class _WorldScaffold:

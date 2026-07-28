@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from __future__ import annotations
 import argparse
-from astro_mine.fleet.cli import _cmd_new, main
+from astro_mine.cli.fleet import _cmd_new
 
 __all__ = ["asset_scaffold"]
 

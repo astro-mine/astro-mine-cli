@@ -245,7 +245,6 @@ command = _Command()
 
 
 from collections.abc import Sequence
-from astro_mine.mind.cli import _cmd_validate, main
 
 
 class _MindValidator:

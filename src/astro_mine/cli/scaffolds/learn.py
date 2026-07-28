@@ -91,7 +91,7 @@ so it runs from the first commit — replace the internals, keep the tag.
 
 from __future__ import annotations
 
-from astro_mine.learn.algos._contract import AlgorithmSpec
+from astro_mine.learn.algos import AlgorithmSpec
 from astro_mine.learn.algos.ippo import IppoAlgorithm
 
 #: The registry's key for this algorithm. Set it deliberately: it is the id a user selects, and it
