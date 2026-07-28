@@ -1,18 +1,28 @@
 """The `package --oci --sign` / `verify` CLI flow (RM-P0-FLEET-06).
 
-The signing key comes from `astro-mine-hub keygen` (the one signing-key command); here it is minted
+The signing key comes from `astro-mine hub keygen` (the one signing-key command); here it is minted
 directly from the same `generate_keypair` primitive rather than through another package's CLI."""
 
 from __future__ import annotations
 
-# Migrated from astro-mine-platform, where these drove `astro-mine-fleet <verb>` directly.
+# Migrated from astro-mine-platform, where these drove `astro-mine fleet <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine fleet <verb>`.
 from astro_mine.cli import main as _astro_mine
 
 
 def main(argv=None):  # type: ignore[no-untyped-def]
-    return _astro_mine(["fleet", *(argv or [])])
+    """`astro-mine fleet <verb>`, raising SystemExit on failure as `fleet.cli.main` did.
+
+    Fleet's old entry point returned None and signalled failure by raising; these tests' local
+    `run()` helper reads the status out of that exception and returns 0 otherwise. The CLI
+    *returns* the status instead -- one rule for every component -- so the raise is
+    reintroduced here rather than rewriting 27 call sites to a different convention.
+    """
+    code = _astro_mine(["fleet", *(argv or [])])
+    if code:
+        raise SystemExit(code)
+    return None
 
 
 import json

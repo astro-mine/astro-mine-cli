@@ -8,7 +8,7 @@ against *any* OCI registry" is the deliverable, not just the library underneath 
 
 from __future__ import annotations
 
-# Migrated from astro-mine-platform, where these drove `astro-mine-hub <verb>` directly.
+# Migrated from astro-mine-platform, where these drove `astro-mine hub <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine hub <verb>`.
 from astro_mine.cli import main as _astro_mine
@@ -148,7 +148,7 @@ def _publish_argv(registry: str, manifest: str, key: str) -> list[str]:
 
 
 _MANIFEST_DOCUMENT = """\
-# The shape `astro-mine-core validate` accepts, and the shape both shipped Core examples use.
+# The shape `astro-mine core validate` accepts, and the shape both shipped Core examples use.
 manifest_version: "0.1"
 manifest:
   name: pol
@@ -195,7 +195,7 @@ def test_a_bad_manifest_is_one_error_line_not_a_traceback(
     key, _ = _key_files(tmp_path)
     assert main(_publish_argv(str(tmp_path / "reg"), str(manifest), key)) == 1
     err = capsys.readouterr().err
-    assert err.startswith("astro-mine-hub publish: ")
+    assert err.startswith("astro-mine hub publish: ")
     assert expected in err
     assert "Traceback" not in err
 
@@ -210,13 +210,13 @@ def test_a_missing_key_or_layer_is_an_error_not_a_traceback(
 
     assert main(_publish_argv(registry, manifest, str(tmp_path / "absent.pem"))) == 1
     err = capsys.readouterr().err
-    assert err.startswith("astro-mine-hub publish: cannot read signing key ")
+    assert err.startswith("astro-mine hub publish: cannot read signing key ")
     assert "Traceback" not in err
 
     argv = [*_publish_argv(registry, manifest, key), "--layer", str(tmp_path / "absent.onnx")]
     assert main(argv) == 1
     err = capsys.readouterr().err
-    assert err.startswith("astro-mine-hub publish: cannot read payload layer ")
+    assert err.startswith("astro-mine hub publish: cannot read payload layer ")
     assert "Traceback" not in err
 
 

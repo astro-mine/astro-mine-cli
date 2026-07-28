@@ -2,14 +2,24 @@
 
 from __future__ import annotations
 
-# Migrated from astro-mine-platform, where these drove `astro-mine-fleet <verb>` directly.
+# Migrated from astro-mine-platform, where these drove `astro-mine fleet <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine fleet <verb>`.
 from astro_mine.cli import main as _astro_mine
 
 
 def main(argv=None):  # type: ignore[no-untyped-def]
-    return _astro_mine(["fleet", *(argv or [])])
+    """`astro-mine fleet <verb>`, raising SystemExit on failure as `fleet.cli.main` did.
+
+    Fleet's old entry point returned None and signalled failure by raising; these tests' local
+    `run()` helper reads the status out of that exception and returns 0 otherwise. The CLI
+    *returns* the status instead -- one rule for every component -- so the raise is
+    reintroduced here rather than rewriting 27 call sites to a different convention.
+    """
+    code = _astro_mine(["fleet", *(argv or [])])
+    if code:
+        raise SystemExit(code)
+    return None
 
 
 import json
@@ -102,7 +112,7 @@ def test_publish_signed_with_roundtrip_verification(
     src = _asset(tmp_path)
     keys = tmp_path / "keys"
     keys.mkdir()
-    priv, public = generate_keypair()  # signing key: `astro-mine-hub keygen`, minted directly here
+    priv, public = generate_keypair()  # signing key: `astro-mine hub keygen`, minted directly here
     (keys / "asset-signing.key").write_bytes(priv)
     (keys / "asset-signing.pub").write_bytes(public)
     reg = tmp_path / "reg"
@@ -128,7 +138,7 @@ def test_publish_signed_with_roundtrip_verification(
 def test_publish_without_a_key_is_refused(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """`fleet publish` always signs — Hub admits no unsigned content (astro-mine-hub#32).
+    """`fleet publish` always signs — Hub admits no unsigned content (astro-mine hub#32).
 
     `fleet package` keeps optional signing: a local OCI artifact never reaches Hub."""
     src = _asset(tmp_path)

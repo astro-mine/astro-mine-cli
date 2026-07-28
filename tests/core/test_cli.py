@@ -1,4 +1,4 @@
-"""``astro-mine-core validate`` — the CLI over the Core-authored formats (G2.5, astro-mine-core#61).
+"""``astro-mine core validate`` — the CLI over the Core-authored formats (G2.5, astro-mine core#61).
 
 The tests pin the properties the issue is about:
 
@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from astro_mine.cli import core as cli
 
-# Migrated from astro-mine-platform, where these drove `astro-mine-core <verb>` directly.
+# Migrated from astro-mine-platform, where these drove `astro-mine core <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine core <verb>`.
 from astro_mine.cli import main as _astro_mine

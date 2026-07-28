@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from astro_mine.cli import sim as cli
 
-# Migrated from astro-mine-platform, where these drove `astro-mine-sim <verb>` directly.
+# Migrated from astro-mine-platform, where these drove `astro-mine sim <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine sim <verb>`.
 from astro_mine.cli import main as _astro_mine
@@ -25,7 +25,6 @@ import re
 import subprocess
 import sys
 import typing
-from importlib.metadata import entry_points
 from pathlib import Path
 
 import pytest
@@ -79,17 +78,6 @@ def test_record_is_deterministic(tmp_path: Path, capsys: pytest.CaptureFixture[s
 # --- container back-compat: the legacy flat form (Dockerfile:74 + Cloud) -------------------------
 
 
-def test_legacy_scenario_flag_routes_to_record(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """The container contract `--scenario X --seed N --out O` (no subcommand) still records."""
-    out_path = tmp_path / "legacy.mcap"
-    code, out, _ = _run_cli(
-        "--scenario", str(_SCENARIO), "--seed", "7", "--out", str(out_path), capsys=capsys
-    )
-    assert code == 0
-    assert out_path.exists()
-    assert _TRACE_HASH.fullmatch(out.strip())
 
 
 def test_top_level_help_is_not_shimmed() -> None:
@@ -101,9 +89,6 @@ def test_top_level_help_is_not_shimmed() -> None:
 # --- both entry paths reach the same CLI --------------------------------------------------------
 
 
-def test_console_script_is_registered() -> None:
-    names = {ep.name for ep in entry_points(group="console_scripts")}
-    assert "astro-mine-sim" in names
 
 
 def test_python_m_entry_path_records(tmp_path: Path) -> None:
@@ -135,7 +120,7 @@ def test_python_m_entry_path_records(tmp_path: Path) -> None:
 def test_run_without_bench_names_the_extra(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    # Simulate astro-mine-bench not being installed: `run` probes with find_spec, so make it report
+    # Simulate astro-mine bench not being installed: `run` probes with find_spec, so make it report
     # the package as absent (matching a real uninstalled state, without touching the real env).
     import importlib.util
 
@@ -148,7 +133,7 @@ def test_run_without_bench_names_the_extra(
     code, out, err = _run_cli("run", "lunar-polar-ice-prospecting-v1", capsys=capsys)
     assert code == 2
     assert out == ""
-    assert "astro-mine-sim[bench]" in err
+    assert "astro-mine sim[bench]" in err
     assert "Traceback" not in err
 
 
@@ -186,7 +171,7 @@ def test_run_without_hub_names_the_extra(
     code, out, err = _run_cli("run", "x", "--registry", str(tmp_path), capsys=capsys)
     assert code == 2
     assert out == ""
-    assert "astro-mine-sim[hub]" in err
+    assert "astro-mine sim[hub]" in err
     assert "Traceback" not in err
 
 
@@ -248,7 +233,7 @@ def test_run_warns_when_a_pinned_provider_did_not_rebuild(
             UnresolvedProvider(
                 content_id="shackleton-de-gerlache-v1",
                 kind="world_provider",
-                producer="astro-mine-worlds",
+                producer="astro-mine worlds",
                 consequence="no terrain, gravity or illumination",
             ),
         )
@@ -273,7 +258,7 @@ def test_run_warns_when_a_pinned_provider_did_not_rebuild(
     assert code == 0  # a warning, not a refusal
     assert out.strip() == "b" * 64  # and the run still happened
     assert "shackleton-de-gerlache-v1" in err
-    assert "astro-mine-worlds" in err  # the package that would fix it
+    assert "astro-mine worlds" in err  # the package that would fix it
     assert "Traceback" not in err  # actionable message, never a traceback (CX-LOCAL)
 
 

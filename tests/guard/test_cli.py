@@ -1,17 +1,17 @@
-"""``astro-mine-guard`` CLI + the packaged anchor spec (G2.6/G2.7, astro-mine-guard#29).
+"""``astro-mine guard`` CLI + the packaged anchor spec (G2.6/G2.7, astro-mine guard#29).
 
 Two things are proven here:
 
 * the reviewed anchor ``SafetySpec`` resolves **from package data**, via ``importlib.resources`` and
-  never a path relative to the repo root — the #55 / astro-mine-bench#37 wheel trap, and the reason
-  ``astro-mine-mind`` had to inline a second copy of a *safety* contract;
+  never a path relative to the repo root — the #55 / astro-mine bench#37 wheel trap, and the reason
+  ``astro-mine mind`` had to inline a second copy of a *safety* contract;
 * the four verbs (``validate``/``compile``/``falsify``/``sign``) work, and fail **closed** — an
   invalid or unsigned-key path is a failure, never a pass.
 """
 
 from __future__ import annotations
 
-# Migrated from astro-mine-platform, where these drove `astro-mine-guard <verb>` directly.
+# Migrated from astro-mine-platform, where these drove `astro-mine guard <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine guard <verb>`.
 from astro_mine.cli import main as _astro_mine

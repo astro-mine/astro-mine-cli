@@ -1,8 +1,8 @@
-"""The astro-mine-cloud CLI -- submit / expand / compile / sweep / workflow / backends."""
+"""The astro-mine cloud CLI -- submit / expand / compile / sweep / workflow / backends."""
 
 from __future__ import annotations
 
-# Migrated from astro-mine-platform, where these drove `astro-mine-cloud <verb>` directly.
+# Migrated from astro-mine-platform, where these drove `astro-mine cloud <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine cloud <verb>`.
 from astro_mine.cli import main as _astro_mine

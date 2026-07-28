@@ -8,7 +8,7 @@ OCI-layout** registry — offline, no hosted Hub (``LUNAR-TR-004``). This is the
 
 from __future__ import annotations
 
-# Migrated from astro-mine-platform, where these drove `astro-mine-link <verb>` directly.
+# Migrated from astro-mine-platform, where these drove `astro-mine link <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine link <verb>`.
 from astro_mine.cli import main as _astro_mine
@@ -59,7 +59,7 @@ def test_publishes_a_signed_contact_plan(
 
     keys = tmp_path / "keys"
     keys.mkdir()
-    priv, public = generate_keypair()  # signing key: `astro-mine-hub keygen`, minted directly here
+    priv, public = generate_keypair()  # signing key: `astro-mine hub keygen`, minted directly here
     (keys / "cosign.key").write_bytes(priv)
     (keys / "cosign.pub").write_bytes(public)
 
@@ -102,7 +102,7 @@ def test_publish_requires_a_signing_key(tmp_path: Path) -> None:
 
     `hub.md` §9 tiers artifacts as *open* (self-published, **signed**, unreviewed), *curated*, and
     *verified* — there is no tier for unsigned content, and Hub's admission gate refuses it
-    (astro-mine-hub#32). Previously this stored the artifact with no attestations, leaving a
+    (astro-mine hub#32). Previously this stored the artifact with no attestations, leaving a
     consumer to pull it with an empty requirement set."""
     registry = tmp_path / "registry"
     with pytest.raises(SystemExit) as exit_info:  # argparse rejects the missing --key

@@ -8,7 +8,7 @@ and missing-command error paths.
 from __future__ import annotations
 
 
-# Migrated from astro-mine-platform, where these drove `astro-mine-bench <verb>` directly.
+# Migrated from astro-mine-platform, where these drove `astro-mine bench <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine bench <verb>`.
 from astro_mine.cli import main as _astro_mine
@@ -118,7 +118,7 @@ def test_score_runner_sim_without_sim_is_a_clean_error() -> None:
     code, out, err = _run("score", "--runner", "sim")
     assert code == 2
     assert out == ""
-    assert "astro-mine-sim[bench]" in err
+    assert "astro-mine sim[bench]" in err
     assert "Traceback" not in err
 
 
@@ -306,7 +306,7 @@ def test_score_refusal_is_a_clean_error(monkeypatch: pytest.MonkeyPatch) -> None
             def _runner(resolved: object, policy: object, seed: int) -> object:
                 raise ScoringRefused(
                     "refusing to score this scenario: 1 pinned input resolved by digest but "
-                    "rebuilt no provider — install astro-mine-worlds"
+                    "rebuilt no provider — install astro-mine worlds"
                 )
 
             return _runner
@@ -320,7 +320,7 @@ def test_score_refusal_is_a_clean_error(monkeypatch: pytest.MonkeyPatch) -> None
     assert code == 2
     assert out == ""  # no half-printed scorecard
     assert "refusing to score this scenario" in err
-    assert "astro-mine-worlds" in err  # the package that fixes it survives into the message
+    assert "astro-mine worlds" in err  # the package that fixes it survives into the message
     assert "Traceback" not in err
 
 
