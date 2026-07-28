@@ -244,7 +244,6 @@ class _Command:
 command = _Command()
 
 
-from collections.abc import Sequence
 
 
 class _MindValidator:

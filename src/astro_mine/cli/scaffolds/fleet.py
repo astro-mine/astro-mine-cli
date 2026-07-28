@@ -10,8 +10,8 @@ two would diverge silently while both still "worked".
 
 from __future__ import annotations
 
-from __future__ import annotations
 import argparse
+
 from astro_mine.cli.fleet import _cmd_new
 
 __all__ = ["asset_scaffold"]

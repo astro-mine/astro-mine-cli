@@ -22,7 +22,6 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Mapping
-from importlib.metadata import EntryPoint, PackageNotFoundError, version
 from types import MappingProxyType
 
 from astro_mine.cli._protocol import InvalidSubcommandError, Subcommand

@@ -194,8 +194,6 @@ class _FieldModelScaffold:
 field_model_scaffold = _FieldModelScaffold()
 
 
-from collections.abc import Sequence
-from astro_mine.cli.worlds import _cmd_validate
 
 
 class _WorldScaffold:

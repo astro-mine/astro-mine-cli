@@ -24,6 +24,7 @@ from pathlib import Path
 
 import pytest
 
+from _verbs import make_entry_point
 from astro_mine.cli import main
 from astro_mine.cli._registry import DOCUMENT_KINDS, PLUGIN_KINDS
 from astro_mine.cli._scaffolds import (
@@ -33,7 +34,6 @@ from astro_mine.cli._scaffolds import (
     discover_scaffolds,
 )
 from astro_mine.cli._validators import discover_validators
-from _verbs import make_entry_point
 
 
 @pytest.mark.parametrize("kind", sorted(DOCUMENT_KINDS))

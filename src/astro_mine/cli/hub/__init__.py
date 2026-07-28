@@ -25,7 +25,6 @@ import sys
 from pathlib import Path
 
 import yaml
-
 from astro_mine.core.registry import ManifestDocument, PluginManifest, validate_manifest
 from astro_mine.core.registry.loader import ManifestValidationError
 from astro_mine.hub.client import HubClient, catalog_from_registry

@@ -46,15 +46,21 @@ import argparse
 import json
 import os
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from pathlib import Path
 from typing import NamedTuple
 
 from astro_mine.core.registry import PluginManifest, PluginRegistry, RegistryError
 from astro_mine.core.sadf import SadfDocument, SadfError, load_sadf, validate_sadf
 from astro_mine.core.sadf.enums import FidelityTier
-from astro_mine.fleet import __version__, exporters, fidelity, importers
-from astro_mine.fleet import CORE_INTERFACES, canonical_json
+from astro_mine.fleet import (
+    CORE_INTERFACES,
+    __version__,
+    canonical_json,
+    exporters,
+    fidelity,
+    importers,
+)
 from astro_mine.fleet.exporters import ExportResult
 from astro_mine.fleet.geometry import GeometryError
 from astro_mine.fleet.lint import lint_asset

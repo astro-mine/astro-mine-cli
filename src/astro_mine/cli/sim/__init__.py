@@ -248,8 +248,8 @@ class _Command:
             return 2
         except SpiceGeometryError as exc:
             print(
-                f"error: this run needs SPICE geometry and no kernel pool is furnished.\n  {exc}\n  "
-                + kernel_help(),
+                "error: this run needs SPICE geometry and no kernel pool is furnished.\n"
+                f"  {exc}\n  " + kernel_help(),
                 file=sys.stderr,
             )
             return 2
