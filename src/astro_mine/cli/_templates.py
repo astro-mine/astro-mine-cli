@@ -25,6 +25,8 @@ import re
 import sys
 from pathlib import Path
 
+from astro_mine.cli.scaffolds._names import check_reserved_verb
+
 __all__ = ["CLI_PLUGIN_SCAFFOLD"]
 
 _USAGE_ERROR = 2
@@ -141,6 +143,13 @@ class _CliPluginScaffold:
         distribution = args.distribution or target.name
         module = args.module or re.sub(r"[-.]", "_", distribution)
         verb = args.verb or re.sub(r"[_.]", "-", distribution).lower()
+
+        # A verb this CLI already provides would be refused at dispatch as a collision
+        # (`_dispatch.main` names both claimants). Catching it here costs one set lookup and
+        # saves the author finding out after publication (astro-mine-cli#14).
+        if (taken := check_reserved_verb(verb)) is not None:
+            print(taken, file=sys.stderr)
+            return _USAGE_ERROR
 
         for value, pattern, what in (
             (distribution, _DISTRIBUTION_RE, "distribution name"),
