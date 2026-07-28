@@ -33,6 +33,8 @@ import re
 import sys
 from pathlib import Path
 
+from astro_mine.cli.scaffolds._names import check_plugin_name
+
 __all__ = ["runner_scaffold"]
 
 _USAGE_ERROR = 2
@@ -162,12 +164,11 @@ class _RunnerScaffold:
                 file=sys.stderr,
             )
             return _USAGE_ERROR
-        if not re.fullmatch(r"[a-z0-9][a-z0-9_-]*", runner):
-            print(
-                f"astro-mine plugin new runner: {runner!r} is not a usable runner id; it is typed "
-                f"after `--runner` on a command line. Pass --runner explicitly.",
-                file=sys.stderr,
-            )
+        bad = check_plugin_name(
+            runner, command="runner", flag="--runner", noun="runner id"
+        )
+        if bad is not None:
+            print(bad, file=sys.stderr)
             return _USAGE_ERROR
         if not module.isidentifier() or keyword.iskeyword(module):
             print(

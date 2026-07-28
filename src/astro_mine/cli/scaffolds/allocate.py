@@ -35,6 +35,8 @@ import re
 import sys
 from pathlib import Path
 
+from astro_mine.cli.scaffolds._names import check_plugin_name
+
 __all__ = ["solver_scaffold"]
 
 _USAGE_ERROR = 2
@@ -158,6 +160,12 @@ class _SolverScaffold:
                 f"solver produced a plan is provenance. Pick your own id with --backend.",
                 file=sys.stderr,
             )
+            return _USAGE_ERROR
+        bad = check_plugin_name(
+            args.backend, command="solver", flag="--backend", noun="solver id"
+        )
+        if bad is not None:
+            print(bad, file=sys.stderr)
             return _USAGE_ERROR
         if not module.isidentifier() or keyword.iskeyword(module):
             print(

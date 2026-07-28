@@ -32,6 +32,8 @@ import re
 import sys
 from pathlib import Path
 
+from astro_mine.cli.scaffolds._names import check_plugin_name
+
 __all__ = ["field_model_scaffold"]
 
 _USAGE_ERROR = 2
@@ -159,6 +161,12 @@ class _FieldModelScaffold:
                 f"Pick your own id with --backend.",
                 file=sys.stderr,
             )
+            return _USAGE_ERROR
+        bad = check_plugin_name(
+            args.backend, command="field-model", flag="--backend", noun="backend id"
+        )
+        if bad is not None:
+            print(bad, file=sys.stderr)
             return _USAGE_ERROR
         if not module.isidentifier() or keyword.iskeyword(module):
             print(

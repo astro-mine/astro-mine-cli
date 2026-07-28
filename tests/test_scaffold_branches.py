@@ -86,18 +86,23 @@ def test_a_constrained_name_is_rejected_by_the_parser(kind: str, tmp_path: Path)
     assert caught.value.code == 2
 
 
-def test_the_cli_scaffold_does_not_yet_refuse_a_built_in_verb(tmp_path: Path) -> None:
-    """KNOWN GAP: `plugin new cli --verb validate` writes a package that can never load.
+def test_the_cli_scaffold_refuses_a_verb_the_platform_owns(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`plugin new cli --verb validate` is refused: the CLI owns that router.
 
     `validate` is a router this CLI owns, so a third party claiming it is rejected at dispatch
     (`_dispatch.main` reports the collision and exits 2). The *scaffold* does not check, so the
     author finds out only after publishing — the one point at which the name is already in
     somebody's lockfile.
 
-    Pinned as-is rather than left silent. The assertion inverts the day the check is added,
-    which is exactly when someone should be told this test exists.
+    Caught at authoring time since astro-mine-cli#14, which is the only moment the fix is
+    cheap: after publication the name is in somebody's lockfile.
     """
-    assert main(["plugin", "new", "cli", str(tmp_path / "p"), "--verb", "validate"]) == 0
+    assert main(["plugin", "new", "cli", str(tmp_path / "p"), "--verb", "validate"]) == 2
+    assert "already provides" in capsys.readouterr().err
+    # A component name is reserved for the same reason.
+    assert main(["plugin", "new", "cli", str(tmp_path / "q"), "--verb", "fleet"]) == 2
 
 
 @pytest.mark.parametrize("kind", sorted(NAME_FLAG))
@@ -159,17 +164,26 @@ def test_document_scaffolds_refuse_to_clobber(kind: str, tmp_path: Path) -> None
 
 
 @pytest.mark.parametrize("kind", UNCHECKED)
-def test_four_scaffolds_do_not_yet_check_the_name_they_are_given(
-    kind: str, tmp_path: Path
+def test_the_formerly_unchecked_kinds_now_refuse_an_unusable_name(
+    kind: str, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """KNOWN GAP: these four write whatever name they are handed into the entry point.
+    """These four used to write whatever name they were handed (astro-mine-cli#14).
 
-    `astro-mine plugin new solver --backend 'Not A Slug!'` emits a package whose
-    `[project.entry-points]` name can never be resolved — entry-point names are matched
-    literally. `runner` and `cli` check; `tier` and `provider` cannot be given a bad value at
-    all because their flag is a closed set. These four have neither guard.
-
-    The author finds out at registration, after publishing, which is the expensive moment.
-    Pinned as-is so the gap is visible and so the assertion inverts the day it is closed.
+    They emitted a package whose `[project.entry-points]` name could never be resolved --
+    names are matched literally -- so the author found out at registration, after publishing.
+    They now share the one rule in `scaffolds/_names.py` with `runner` and `cli`.
     """
-    assert main(["plugin", "new", kind, str(tmp_path / "p"), NAME_FLAG[kind], "Not A Slug!"]) == 0
+    code = main(["plugin", "new", kind, str(tmp_path / "p"), NAME_FLAG[kind], "Not A Slug!"])
+    assert code == 2, f"{kind} still accepts an unusable name"
+    assert "entry-point name" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("kind", sorted(NAME_FLAG))
+def test_every_kind_accepts_its_own_default_name(kind: str, tmp_path: Path) -> None:
+    """The rule must not refuse the scaffolds' own defaults.
+
+    It did at first: the platform's ids are dotted (`marl.demo.algorithm`,
+    `mind.control.mpc`), and a rule without `.` rejected them. Pinned so a future tightening
+    cannot quietly break the happy path.
+    """
+    assert main(["plugin", "new", kind, str(tmp_path / f"p-{kind}")]) == 0

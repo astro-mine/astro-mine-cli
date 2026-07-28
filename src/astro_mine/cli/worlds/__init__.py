@@ -103,7 +103,16 @@ def _publish(args: argparse.Namespace) -> int:
     from astro_mine.hub.registry import open_registry
     from astro_mine.worlds.spec import WorldBundle, publish_world_bundle
 
-    bundle = WorldBundle.load(args.bundle)
+    try:
+        bundle = WorldBundle.load(args.bundle)
+    except OSError as exc:
+        # Every other verb reports bad input as one line; this one used to let the
+        # FileNotFoundError out (astro-mine-cli#15).
+        print(
+            f"astro-mine worlds publish: cannot read {args.bundle}: {exc.strerror or exc}",
+            file=sys.stderr,
+        )
+        return 1
     # `open_registry` dispatches on the string: a filesystem path → the local OCI-layout store
     # (unchanged), a registry URL like `ghcr.io/astro-mine` → the remote OCI Distribution client.
     registry = open_registry(args.registry)

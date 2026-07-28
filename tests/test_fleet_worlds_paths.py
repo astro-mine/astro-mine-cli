@@ -67,23 +67,25 @@ def test_worlds_validate_json_is_machine_readable(
 def test_worlds_publish_without_a_bundle_is_an_error_not_a_traceback(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The publish path on a missing bundle. No registry is touched.
+    """The publish path reports a missing bundle in one line. No registry is touched.
 
     A key is supplied because Worlds admits no unsigned content, so omitting it would test
     argparse's required-argument handling rather than the publish path.
+
+    This asserted `pytest.raises(FileNotFoundError)` until astro-mine-cli#15 -- the defect it
+    pinned. Inverted here, in the commit that fixed it.
     """
     from astro_mine.hub.supply_chain import generate_keypair
 
     private, _ = generate_keypair()
     key = tmp_path / "k.pem"
     key.write_bytes(private)
-    # KNOWN DEFECT, pre-existing: every other verb reports bad input as one line, but
-    # `worlds publish` lets the FileNotFoundError out. The port copied `worlds/cli.py`
-    # verbatim, so this predates the CLI move; it is asserted as-is rather than papered over,
-    # and the assertion will fail the day someone fixes it -- which is the point.
-    with pytest.raises(FileNotFoundError):
-        main(["worlds", "publish", str(tmp_path / "absent"),
-              "--registry", str(tmp_path / "r"), "--key", str(key)])
+    code = main(["worlds", "publish", str(tmp_path / "absent"),
+                 "--registry", str(tmp_path / "r"), "--key", str(key)])
+    assert code == 1
+    err = capsys.readouterr().err
+    assert "cannot read" in err
+    assert "Traceback" not in err
 
 
 # --- fleet ----------------------------------------------------------------------------------
@@ -98,7 +100,9 @@ def test_fleet_lint_reports_findings_without_failing_the_document(asset: Path) -
     assert main(["fleet", "lint", str(asset)]) in (0, 1)
 
 
-def test_fleet_resolve_emits_canonical_json(asset: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_fleet_resolve_emits_canonical_json(
+    asset: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     """`fleet resolve` is the canonical form — sorted keys, two-space indent.
 
     This is the projection three surfaces must agree on byte for byte, which is why
@@ -116,7 +120,9 @@ def test_fleet_families_lists_the_parametric_families(capsys: pytest.CaptureFixt
     assert capsys.readouterr().out.strip()
 
 
-def test_fleet_fidelity_lists_an_assets_profiles(asset: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_fleet_fidelity_lists_an_assets_profiles(
+    asset: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     assert main(["fleet", "fidelity", str(asset)]) == 0
     assert capsys.readouterr().out.strip()
 

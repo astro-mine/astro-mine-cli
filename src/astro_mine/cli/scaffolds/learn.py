@@ -33,6 +33,8 @@ import re
 import sys
 from pathlib import Path
 
+from astro_mine.cli.scaffolds._names import check_plugin_name
+
 __all__ = ["algorithm_scaffold", "curriculum_scaffold"]
 
 _USAGE_ERROR = 2
@@ -154,6 +156,12 @@ class _AlgorithmScaffold:
         target = Path(args.output)
         distribution = args.distribution or target.name
         module = args.module or re.sub(r"[-.]", "_", distribution)
+        bad = check_plugin_name(
+            args.tag, command="algorithm", flag="--tag", noun="algorithm id"
+        )
+        if bad is not None:
+            print(bad, file=sys.stderr)
+            return _USAGE_ERROR
         if (bad := _bad_module(module)) is not None:
             print(bad, file=sys.stderr)
             return _USAGE_ERROR
@@ -283,6 +291,12 @@ class _CurriculumScaffold:
         target = Path(args.output)
         distribution = args.distribution or target.name
         module = args.module or re.sub(r"[-.]", "_", distribution)
+        bad = check_plugin_name(
+            args.curriculum, command="curriculum", flag="--name-it", noun="curriculum id"
+        )
+        if bad is not None:
+            print(bad, file=sys.stderr)
+            return _USAGE_ERROR
         if (bad := _bad_module(module)) is not None:
             print(bad, file=sys.stderr)
             return _USAGE_ERROR
