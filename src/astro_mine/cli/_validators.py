@@ -86,9 +86,28 @@ class ClaimCollisionError(Exception):
 
 
 def discover_validators(entries: Iterable[EntryPoint] | None = None) -> tuple[Validator, ...]:
-    """Load every advertised validator. ``entries`` is injectable for tests."""
+    """Every validator in this environment — the platform's four, plus any third party's.
+
+    The four format owners (Core, Guard, Mind, Worlds) are resolved from
+    :data:`astro_mine.cli._registry.VALIDATOR_OWNERS` rather than from installed metadata: their
+    code ships in this distribution, so a metadata round-trip would be asking the environment
+    something already known at author time. Third parties keep the entry-point path, which is
+    the no-PR-to-extend guarantee (RFC-0011 §6) and is unaffected.
+
+    ``entries`` is injectable for tests; passing an explicit iterable **replaces** the
+    third-party half only — the built-ins are always present, because they always are.
+    """
+    import importlib
+
+    from astro_mine.cli._registry import VALIDATOR_OWNERS
+
+    builtins = [
+        _check(importlib.import_module(f"astro_mine.cli.{owner}").validator, None)
+        for owner in VALIDATOR_OWNERS
+    ]
     found = entry_points(group=VALIDATOR_ENTRY_POINT_GROUP) if entries is None else tuple(entries)
-    return tuple(_check(entry.load(), entry) for entry in sorted(found, key=lambda e: e.name))
+    third_party = [_check(entry.load(), entry) for entry in sorted(found, key=lambda e: e.name)]
+    return tuple(builtins + third_party)
 
 
 def claim(validators: Sequence[Validator], path: str) -> tuple[Validator, str]:
@@ -107,15 +126,29 @@ def claim(validators: Sequence[Validator], path: str) -> tuple[Validator, str]:
     return claims[0]
 
 
-def _check(obj: Any, entry: EntryPoint) -> Validator:
+def _check(obj: Any, entry: EntryPoint | None) -> Validator:
+    """Conform-or-explain. ``entry`` is ``None`` for the four validators that ship here.
+
+    A built-in that fails this is *our* bug, not a packaging bug in somebody else's
+    distribution, so it must not be reported as one — telling a user to "report this to that
+    package" when the package is `astro-mine-cli` itself would send them nowhere useful.
+    """
     missing = [m for m in REQUIRED_MEMBERS if not hasattr(obj, m)]
-    if missing:
-        dist = getattr(entry.dist, "name", None)
-        origin = f"{entry.value!r} (from {dist!r})" if dist else repr(entry.value)
+    if not missing:
+        return obj  # type: ignore[no-any-return]
+
+    required = ", ".join(REQUIRED_MEMBERS)
+    absent = ", ".join(repr(m) for m in missing)
+    if entry is None:
         raise InvalidValidatorError(
-            f"the validator {entry.name!r} does not satisfy the "
-            f"{VALIDATOR_ENTRY_POINT_GROUP} contract: missing "
-            f"{', '.join(repr(m) for m in missing)}. Its entry point is {origin}; report this to "
-            f"that package. A validator must provide: {', '.join(REQUIRED_MEMBERS)}."
+            f"the built-in validator {getattr(obj, 'name', obj)!r} does not satisfy the "
+            f"{VALIDATOR_ENTRY_POINT_GROUP} contract: missing {absent}. This is a defect in "
+            f"astro-mine-cli. A validator must provide: {required}."
         )
-    return obj  # type: ignore[no-any-return]
+    dist = getattr(entry.dist, "name", None)
+    origin = f"{entry.value!r} (from {dist!r})" if dist else repr(entry.value)
+    raise InvalidValidatorError(
+        f"the validator {entry.name!r} does not satisfy the "
+        f"{VALIDATOR_ENTRY_POINT_GROUP} contract: missing {absent}. Its entry point is "
+        f"{origin}; report this to that package. A validator must provide: {required}."
+    )

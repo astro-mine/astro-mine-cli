@@ -67,9 +67,15 @@ COMPONENTS: MappingProxyType[str, Component] = MappingProxyType(
 
 
 class Kind(NamedTuple):
-    """One scaffold kind: the module that writes it, and one line about what it emits."""
+    """One scaffold kind: the module and attribute that write it, and what it emits.
+
+    Grouped by *owning component* rather than one module per kind, mirroring the platform's
+    own layout, so shared helpers stay together -- Mind's `stack` and `tier` templates share a
+    renderer, as do Learn's `algorithm` and `curriculum`, and Worlds' `world` and `field-model`.
+    """
 
     module: str
+    attr: str
     help: str
 
 
@@ -78,10 +84,18 @@ class Kind(NamedTuple):
 #: is why each module delegates its final validation to that component's own loader.
 DOCUMENT_KINDS: MappingProxyType[str, Kind] = MappingProxyType(
     {
-        "asset": Kind("astro_mine.cli.scaffolds.asset", "a SADF asset (Fleet owns the format)"),
-        "world": Kind("astro_mine.cli.scaffolds.world", "a WorldSpec (Worlds owns the format)"),
-        "stack": Kind("astro_mine.cli.scaffolds.stack", "an autonomy stack spec (Mind's)"),
-        "safety": Kind("astro_mine.cli.scaffolds.safety", "a SafetySpec (Guard's)"),
+        "asset": Kind(
+            "astro_mine.cli.scaffolds.fleet", "asset_scaffold", "a SADF asset (Fleet's format)"
+        ),
+        "world": Kind(
+            "astro_mine.cli.scaffolds.worlds", "world_scaffold", "a WorldSpec (Worlds' format)"
+        ),
+        "stack": Kind(
+            "astro_mine.cli.scaffolds.mind", "stack_scaffold", "an autonomy stack spec (Mind's)"
+        ),
+        "safety": Kind(
+            "astro_mine.cli.scaffolds.guard", "safety_scaffold", "a SafetySpec (Guard's)"
+        ),
     }
 )
 
@@ -95,21 +109,40 @@ DOCUMENT_KINDS: MappingProxyType[str, Kind] = MappingProxyType(
 #: now possible — deliberately left out of this change rather than smuggled in (astro-mine-cli#12).
 PLUGIN_KINDS: MappingProxyType[str, Kind] = MappingProxyType(
     {
-        "tier": Kind("astro_mine.cli.scaffolds.tier", "an autonomy tier (astro_mine.mind.tier_plugins)"),
-        "provider": Kind("astro_mine.cli.scaffolds.provider", "a content provider (astro_mine.providers)"),
+        "tier": Kind(
+            "astro_mine.cli.scaffolds.mind",
+            "tier_scaffold",
+            "an autonomy tier (astro_mine.mind.tier_plugins)",
+        ),
+        "provider": Kind(
+            "astro_mine.cli.scaffolds.sim",
+            "provider_scaffold",
+            "a content provider (astro_mine.providers)",
+        ),
         "field-model": Kind(
-            "astro_mine.cli.scaffolds.field_model",
+            "astro_mine.cli.scaffolds.worlds",
+            "field_model_scaffold",
             "an illumination backend (astro_mine.field_models)",
         ),
-        "runner": Kind("astro_mine.cli.scaffolds.runner", "a Bench backend (astro_mine.bench.runners)"),
+        "runner": Kind(
+            "astro_mine.cli.scaffolds.bench",
+            "runner_scaffold",
+            "a Bench backend (astro_mine.bench.runners)",
+        ),
         "solver": Kind(
-            "astro_mine.cli.scaffolds.solver", "an allocation backend (astro_mine.allocate.solvers)"
+            "astro_mine.cli.scaffolds.allocate",
+            "solver_scaffold",
+            "an allocation backend (astro_mine.allocate.solvers)",
         ),
         "algorithm": Kind(
-            "astro_mine.cli.scaffolds.algorithm", "a MARL algorithm (astro_mine.learn.algorithms)"
+            "astro_mine.cli.scaffolds.learn",
+            "algorithm_scaffold",
+            "a MARL algorithm (astro_mine.learn.algorithms)",
         ),
         "curriculum": Kind(
-            "astro_mine.cli.scaffolds.curriculum", "a curriculum (astro_mine.learn.curricula)"
+            "astro_mine.cli.scaffolds.learn",
+            "curriculum_scaffold",
+            "a curriculum (astro_mine.learn.curricula)",
         ),
     }
 )

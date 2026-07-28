@@ -22,7 +22,7 @@ def test_bare_invocation_prints_help_and_succeeds(capsys: pytest.CaptureFixture[
     assert main([], verbs=EMPTY) == 0  # type: ignore[arg-type]
     out = capsys.readouterr().out
     assert "usage: astro-mine" in out
-    assert "Verbs:" in out
+    assert "Components" in out
 
 
 def test_validate_is_always_available(capsys: pytest.CaptureFixture[str]) -> None:
@@ -44,9 +44,11 @@ def test_the_empty_state_still_maps_the_platform(capsys: pytest.CaptureFixture[s
     """
     main([], verbs=EMPTY)  # type: ignore[arg-type]
     out = capsys.readouterr().out
-    assert "not installed here" in out
-    assert "score" in out and "astro-mine-bench" in out
-    assert "astro-mine-bench score" in out  # the component CLIs work directly, today
+    assert "Routers" in out
+    # Every component is named even with no third-party verbs registered, because the listing
+    # is built from a static table rather than from what happens to be discoverable.
+    assert "bench" in out and "fleet" in out and "core" in out
+    assert "astro-mine <component> --help" in out
 
 
 def test_unknown_verb_fails(capsys: pytest.CaptureFixture[str]) -> None:
@@ -54,7 +56,7 @@ def test_unknown_verb_fails(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit) as excinfo:
         main(["definitely-not-a-verb"], verbs=EMPTY)  # type: ignore[arg-type]
     assert excinfo.value.code == 2
-    assert "unknown verb" in capsys.readouterr().err
+    assert "unknown component or verb" in capsys.readouterr().err
 
 
 def test_help_exits_zero() -> None:
@@ -73,4 +75,4 @@ def test_version_flag_reports_the_package_version(capsys: pytest.CaptureFixture[
 def test_parser_is_built_per_call() -> None:
     """Not a style point: the verb set is read from installed metadata at build time, so a cached
     parser would freeze the environment as it looked at first import."""
-    assert build_parser(EMPTY) is not build_parser(EMPTY)  # type: ignore[arg-type]
+    assert build_parser() is not build_parser()

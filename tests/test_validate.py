@@ -96,13 +96,6 @@ def test_two_claimants_is_a_hard_error(
     assert "Traceback" not in err
 
 
-def test_no_validators_installed_names_what_to_install(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    assert _run(["a.yaml"], monkeypatch, []) == 2
-    err = capsys.readouterr().err
-    assert "astro-mine-core" in err and "astro-mine-guard" in err and "astro-mine-mind" in err
-    assert "Traceback" not in err
 
 
 def test_a_malformed_validator_is_reported_not_raised(

@@ -378,3 +378,46 @@ class _Command:
 
 
 command = _Command()
+
+
+from astro_mine.guard.cli import _cmd_validate, main
+
+
+class _GuardValidator:
+    """Guard's half of the federated `astro-mine validate` (RFC-0011 §6).
+
+    Guard owns the SafetySpec format, so it owns the checker. The umbrella routes; it holds no
+    schema knowledge of its own and reimplements nothing here — ``validate`` calls the same
+    ``_cmd_validate`` that ``astro-mine-guard validate`` dispatches to, so the two surfaces cannot
+    disagree about what is valid.
+    """
+
+    name = "guard"
+
+    def claims(self, path: str) -> str | None:
+        """Recognize a SafetySpec by its ``safety_version`` key, or decline.
+
+        Cheap and total: the umbrella asks every installed validator about every file, so a
+        document that is Core's or Mind's must come back ``None`` rather than raise — at claim time
+        nobody owns the file yet, and raising would turn another component's document into a
+        Guard traceback. A file that *is* Guard's but malformed is claimed here and then
+        reported properly by the real checker.
+        """
+        import yaml
+
+        try:
+            with open(path, encoding="utf-8") as handle:
+                document = yaml.safe_load(handle)
+        except (OSError, yaml.YAMLError):
+            return None
+        if isinstance(document, dict) and "safety_version" in document:
+            return "safety_spec"
+        return None
+
+    def validate(self, paths: Sequence[str], *, as_json: bool) -> int:
+        """Run the same checker `astro-mine-guard validate` runs — not a second implementation."""
+        del as_json  # Guard's checker has no JSON mode; its text report is the output
+        return int(_cmd_validate(argparse.Namespace(spec=list(paths))))
+
+
+validator = _GuardValidator()

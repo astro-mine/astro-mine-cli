@@ -64,12 +64,18 @@ _ROUTERS: dict[str, Subcommand] = {
 }
 
 
-def build_parser() -> argparse.ArgumentParser:
-    """Build the phase-one parser: the component (or router), and the rest untouched."""
+def build_parser(verbs: Mapping[str, EntryPoint] | None = None) -> argparse.ArgumentParser:
+    """Build the phase-one parser: the component (or router), and the rest untouched.
+
+    ``verbs`` is the third-party set, injectable for tests; ``None`` reads the environment.
+    Threading it through rather than re-discovering inside :func:`_format_listing` matters:
+    the listing must describe the same environment the dispatcher will route in, or a caller
+    that injected a verb would be told it does not exist and then have it work anyway.
+    """
     parser = argparse.ArgumentParser(
         prog="astro-mine",
         description=_DESCRIPTION,
-        epilog=_format_listing(),
+        epilog=_format_listing(verbs),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         add_help=True,
     )
@@ -123,7 +129,7 @@ def main(
         )
         return _USAGE_ERROR
 
-    parser = build_parser()
+    parser = build_parser(third_party)
     args = parser.parse_args(argv)
 
     if args.name is None:
@@ -188,7 +194,7 @@ def _report_unknown(
     parser.error(f"unknown component or verb {name!r}{hint}; available: {', '.join(known)}")
 
 
-def _format_listing() -> str:
+def _format_listing(verbs: Mapping[str, EntryPoint] | None = None) -> str:
     """The listing under ``--help``, built without importing a single component."""
     width = max(len(n) for n in (*COMPONENTS, *_ROUTERS)) + 2
     lines = ["Components — `astro-mine <component> <verb>`:"]
@@ -196,11 +202,12 @@ def _format_listing() -> str:
     lines += ["", "Routers — these pick the owning component for you:"]
     lines += [f"  {name:<{width}}{verb.help}" for name, verb in _ROUTERS.items()]
 
-    try:
-        third_party = discover_verbs()
-    except VerbCollisionError:
-        third_party = {}
-    installed = {n: e for n, e in third_party.items() if n not in {*COMPONENTS, *_ROUTERS}}
+    if verbs is None:
+        try:
+            verbs = discover_verbs()
+        except VerbCollisionError:
+            verbs = {}
+    installed = {n: e for n, e in verbs.items() if n not in {*COMPONENTS, *_ROUTERS}}
     if installed:
         lines += ["", "Added by installed packages:"]
         lines += [f"  {n:<{width}}provided by {describe_provider(e)}" for n, e in installed.items()]

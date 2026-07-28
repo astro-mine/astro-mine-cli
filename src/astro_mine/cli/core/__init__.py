@@ -499,3 +499,41 @@ class _Command:
 
 
 command = _Command()
+
+
+from collections.abc import Sequence
+from astro_mine.core.cli import KindError, _cmd_validate, resolve_kind
+
+
+class _CoreValidator:
+    """Core's half of the federated `astro-mine validate`."""
+
+    name = "core"
+
+    def claims(self, path: str) -> str | None:
+        """Resolve the document's kind from its ``$schema``/``$id``, or decline it.
+
+        Unreadable or unparseable files are declined rather than claimed: at claim time nobody has
+        agreed to own the file yet, so raising here would turn *another* component's malformed
+        document into a Core traceback.
+        """
+        import yaml
+
+        try:
+            with open(path, encoding="utf-8") as handle:
+                document = yaml.safe_load(handle)
+        except (OSError, yaml.YAMLError):
+            return None
+        if not isinstance(document, dict):
+            return None
+        try:
+            return str(resolve_kind(document, None).slug)
+        except KindError:
+            return None
+
+    def validate(self, paths: Sequence[str], *, as_json: bool) -> int:
+        """Run the same checker `astro-mine-core validate` runs — not a second implementation."""
+        return int(_cmd_validate(argparse.Namespace(file=list(paths), kind=None, json=as_json)))
+
+
+validator = _CoreValidator()

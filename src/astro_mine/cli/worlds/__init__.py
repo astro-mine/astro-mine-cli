@@ -162,3 +162,46 @@ class _Command:
 
 
 command = _Command()
+
+
+from astro_mine.worlds.cli import _cmd_validate, main
+
+
+#: The root properties ``WorldSpec`` declares with no default — the claim key for
+#: `astro-mine validate`. Kept as data so the rule and the model cannot drift apart silently:
+#: a test derives this same set from the model and compares, so adding a required field to
+#: ``WorldSpec`` without revisiting the claim fails loudly.
+REQUIRED_ROOT: frozenset[str] = frozenset({"world_id", "crs", "region", "source_dem"})
+
+
+class _WorldsValidator:
+    """Worlds's half of the federated `astro-mine validate` (RFC-0011 §6)."""
+
+    name = "worlds"
+
+    def claims(self, path: str) -> str | None:
+        """Return ``"world_spec"`` if ``path`` is a WorldSpec, else ``None``.
+
+        Cheap and total: the umbrella asks every installed validator about every file, so a
+        document that is Core's or Guard's must come back ``None`` rather than raise — at claim
+        time nobody owns the file yet, and raising would turn another component's malformed
+        document into a Worlds traceback. A file that *is* Worlds's but malformed is claimed here
+        and then reported properly by the real checker.
+        """
+        import yaml
+
+        try:
+            with open(path, encoding="utf-8") as handle:
+                document = yaml.safe_load(handle)
+        except (OSError, yaml.YAMLError):
+            return None
+        if isinstance(document, dict) and document.keys() >= REQUIRED_ROOT:
+            return "world_spec"
+        return None
+
+    def validate(self, paths: Sequence[str], *, as_json: bool) -> int:
+        """Run the same checker `astro-mine-worlds validate` runs — not a second implementation."""
+        return int(_cmd_validate(argparse.Namespace(path=list(paths), json=as_json)))
+
+
+validator = _WorldsValidator()
