@@ -1,0 +1,3190 @@
+{
+  "bench": {
+    "actions": [],
+    "description": "The Bench command line \u2014 clone, run, and score a baseline (RM-P0-BENCH-05; bench.md \u00a712).",
+    "verbs": {
+      "fetch": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "local store to populate (default: $ASTRO_MINE_HUB_REGISTRY, else /home/djankov/.cache/astro-mine/hub-registry)",
+            "metavar": "PATH",
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'lunar-polar-ice-prospecting-v1'",
+            "dest": "scenario_id",
+            "help": "zoo scenario whose pins to fetch (default: lunar-polar-ice-prospecting-v1)",
+            "metavar": null,
+            "nargs": "?",
+            "option_strings": [],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'ghcr.io/astro-mine'",
+            "dest": "source",
+            "help": "published registry to fetch from (default: ghcr.io/astro-mine)",
+            "metavar": "REGISTRY",
+            "nargs": null,
+            "option_strings": [
+              "--from"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "trusted_key",
+            "help": "public key pinning *whose* signature is accepted. Optional: content is verified by digest regardless, and the pins ship in this package. Without it a signature must still be present, intact and bound to the artifact \u2014 but any key satisfies it.",
+            "metavar": "PATH",
+            "nargs": null,
+            "option_strings": [
+              "--trusted-key"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "Resolve a scenario's pinned content by digest, mirror it into a local OCI-layout store, and verify it fail-closed. The anchor pulls ~461 MB (the world bundle is 99.6% of it); a private registry needs $GITHUB_TOKEN with read:packages until the org flips public. Re-running is idempotent and works offline.",
+        "verbs": {}
+      },
+      "list": {
+        "actions": [],
+        "description": "",
+        "verbs": {}
+      },
+      "score": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "json",
+            "help": "emit the scorecard as JSON",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--json"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "local content store an engine-backed runner reads (default: $ASTRO_MINE_HUB_REGISTRY, else the cache dir `astro-mine-bench fetch` writes to). Ignored by the fixture runner.",
+            "metavar": "PATH",
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'fixture'",
+            "dest": "runner",
+            "help": "runner to score with (default: fixture). 'fixture' is a deterministic trace fixture, not a physics engine; 'sim' runs the real Sim engine and needs astro-mine-sim[bench] plus fetched content. The runner is recorded in the scorecard and its hash.",
+            "metavar": "NAME",
+            "nargs": null,
+            "option_strings": [
+              "--runner"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'lunar-polar-ice-prospecting-v1'",
+            "dest": "scenario_id",
+            "help": "zoo scenario id to score (default: lunar-polar-ice-prospecting-v1)",
+            "metavar": null,
+            "nargs": "?",
+            "option_strings": [],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "seeds",
+            "help": "seeds to score (default: the public set)",
+            "metavar": "SEED",
+            "nargs": "+",
+            "option_strings": [
+              "--seeds"
+            ],
+            "required": false,
+            "type": "int"
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "submit": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "author",
+            "help": "display metadata: the author's name",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--author"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "hub_ref",
+            "help": "Hub 'name:version' tag or 'sha256:' digest \u2014 the recommended, reproducible path",
+            "metavar": "REF",
+            "nargs": null,
+            "option_strings": [
+              "--hub-ref"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "job",
+            "help": "follow an existing job from an earlier submit instead of submitting again",
+            "metavar": "JOB_ID",
+            "nargs": null,
+            "option_strings": [
+              "--job"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "json",
+            "help": "emit the submission as JSON",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--json"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "method",
+            "help": "display metadata: the method's name",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--method"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "policy_ref",
+            "help": "importable policy reference (local/dev; not reproducible, so not leaderboard-grade)",
+            "metavar": "MODULE:ATTR",
+            "nargs": null,
+            "option_strings": [
+              "--policy-ref"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "scenario_id",
+            "help": "the zoo scenario to submit against (required unless --job)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--scenario-id"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "to",
+            "help": "leaderboard base URL",
+            "metavar": "URL",
+            "nargs": null,
+            "option_strings": [
+              "--to"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "token_file",
+            "help": "read the bearer token from this file instead of $ASTRO_MINE_BENCH_TOKEN",
+            "metavar": "PATH",
+            "nargs": null,
+            "option_strings": [
+              "--token-file"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "wait",
+            "help": "poll the job to a terminal status and print the resulting submission + rank",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--wait"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "Submit a policy to a leaderboard and, with --wait, follow it to a verdict. --hub-ref is the path a community submission should take: the artifact is referenced by digest and verified fail-closed, so the entry is reproducible. --policy-ref is the local/dev path \u2014 it runs sandboxed like any submission, but nothing pins what the reference resolves to, so it is not leaderboard-grade. The bearer token is read from $ASTRO_MINE_BENCH_TOKEN (or --token-file), never from a flag; identity comes from the token alone.",
+        "verbs": {}
+      },
+      "zoo-search": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "dsn",
+            "help": "catalog DSN (default: $ASTRO_MINE_BENCH_CATALOG_DSN)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--dsn"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "5",
+            "dest": "limit",
+            "help": "how many hits to return",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--limit"
+            ],
+            "required": false,
+            "type": "int"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "query",
+            "help": "the free-text query to rank scenarios against",
+            "metavar": null,
+            "nargs": "+",
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "zoo-sync": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "dsn",
+            "help": "catalog DSN (default: $ASTRO_MINE_BENCH_CATALOG_DSN)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--dsn"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      }
+    }
+  },
+  "cloud": {
+    "actions": [],
+    "description": "The ``astro-mine-cloud`` CLI -- submit and compile jobs/sweeps/workflows.",
+    "verbs": {
+      "backends": {
+        "actions": [],
+        "description": "",
+        "verbs": {}
+      },
+      "compile": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "engine",
+            "help": "force an engine (default: auto)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--engine"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'default'",
+            "dest": "namespace",
+            "help": "target namespace",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--namespace"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "spec",
+            "help": "path to a JobSpec JSON file",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "expand": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "spec",
+            "help": "path to a SweepSpec JSON file",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "submit": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'local'",
+            "dest": "backend",
+            "help": "backend name (default: local)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--backend"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_AppendAction",
+            "const": null,
+            "default": "[]",
+            "dest": "input",
+            "help": "stage a local input file",
+            "metavar": "NAME=PATH",
+            "nargs": null,
+            "option_strings": [
+              "--input"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "spec",
+            "help": "path to a JobSpec JSON file",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "store",
+            "help": "artifact store root",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--store"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "sweep": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'default'",
+            "dest": "namespace",
+            "help": "target namespace",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--namespace"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "spec",
+            "help": "path to a SweepSpec JSON file",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "workflow": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'default'",
+            "dest": "namespace",
+            "help": "target namespace",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--namespace"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "spec",
+            "help": "path to a WorkflowSpec JSON file",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      }
+    }
+  },
+  "core": {
+    "actions": [
+      {
+        "choices": null,
+        "cls": "_StoreTrueAction",
+        "const": "True",
+        "default": "False",
+        "dest": "json",
+        "help": "machine-readable output",
+        "metavar": null,
+        "nargs": 0,
+        "option_strings": [
+          "--json"
+        ],
+        "required": false,
+        "type": null
+      }
+    ],
+    "description": "Validate Core-authored file formats (SADF, ObjectiveSpec, MissionSpec, Plan, plugin manifest, PolicyPackage, RunProvenance, message documents).",
+    "verbs": {
+      "kinds": {
+        "actions": [],
+        "description": "",
+        "verbs": {}
+      },
+      "validate": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "file",
+            "help": "path to a JSON/YAML document ('-' for stdin)",
+            "metavar": null,
+            "nargs": "+",
+            "option_strings": [],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "kind",
+            "help": "format to validate against (default: infer from the document's $schema). Run 'astro-mine-core kinds' for the list.",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--kind"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      }
+    }
+  },
+  "fleet": {
+    "actions": [
+      {
+        "choices": null,
+        "cls": "_VersionAction",
+        "const": null,
+        "default": "'==SUPPRESS=='",
+        "dest": "version",
+        "help": "show program's version number and exit",
+        "metavar": null,
+        "nargs": 0,
+        "option_strings": [
+          "--version"
+        ],
+        "required": false,
+        "type": null
+      }
+    ],
+    "description": "Author, validate, lint, package, sign, and verify SADF assets.",
+    "verbs": {
+      "catalog": {
+        "actions": [
+          {
+            "choices": [
+              "gltf",
+              "usd"
+            ],
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'gltf'",
+            "dest": "format",
+            "help": "geometry format for --preview (default: gltf)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--format"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "json",
+            "help": "emit machine-readable JSON diagnostics",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--json"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "materialize",
+            "help": "with --preview: write a servable SADF-JSON + geometry dir; print the documentUrl",
+            "metavar": "DIR",
+            "nargs": null,
+            "option_strings": [
+              "--materialize"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "preview",
+            "help": "print one asset's geometry refs (name:version or sha256:...) instead of the menu",
+            "metavar": "REFERENCE",
+            "nargs": null,
+            "option_strings": [
+              "--preview"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "local OCI-layout registry path, or a remote registry URL (e.g. ghcr.io/astro-mine)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "requires",
+            "help": "only assets declaring all these Core capability tags (Mind/Allocate negotiation)",
+            "metavar": "TAG[,TAG...]",
+            "nargs": null,
+            "option_strings": [
+              "--requires"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "export": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "assets_dir",
+            "help": "directory for the generated URDF/SDF meshes (default: <output>_meshes; USD references the asset's own geometry in place and ignores this)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--assets-dir"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": [
+              "articulated",
+              "kinematic",
+              "massmodel"
+            ],
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'articulated'",
+            "dest": "fidelity",
+            "help": "fidelity tier selecting the visual LOD (default: articulated \u2014 the finest mesh). URDF/SDF carry one tier; USD carries them all",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--fidelity"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": [
+              "sdf",
+              "urdf",
+              "usd"
+            ],
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'urdf'",
+            "dest": "format",
+            "help": "target description format (default: urdf)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--format"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "json",
+            "help": "emit machine-readable JSON diagnostics",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--json"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "output",
+            "help": "path to write the description to",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--output",
+              "-o"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "path",
+            "help": "path to a SADF document",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "families": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "json",
+            "help": "emit machine-readable JSON diagnostics",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--json"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "fidelity": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "json",
+            "help": "emit machine-readable JSON diagnostics",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--json"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "path",
+            "help": "path to a SADF document",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "import": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "assets_dir",
+            "help": "directory for generated USD/glTF geometry (default: <output>_assets)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--assets-dir"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": [
+              "sdf",
+              "urdf"
+            ],
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "format",
+            "help": "override format detection (by extension)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--format"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "output",
+            "help": "path to write the SADF document",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--output",
+              "-o"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "path",
+            "help": "path to a URDF or SDF description",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "lint": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "json",
+            "help": "emit machine-readable JSON diagnostics",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--json"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "paths",
+            "help": "paths to SADF documents",
+            "metavar": null,
+            "nargs": "+",
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "new": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'0.1.0'",
+            "dest": "asset_version",
+            "help": "asset version (default: 0.1.0)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--asset-version"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "force",
+            "help": "overwrite an existing file",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--force"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "id",
+            "help": "asset identity id (default: example.<kind>)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--id"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "kind",
+            "help": "asset kind label (e.g. rover, orbiter, excavator)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "name",
+            "help": "asset display name",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--name"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "output",
+            "help": "path to write the scaffold to",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "package": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "json",
+            "help": "emit machine-readable JSON diagnostics",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--json"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "key",
+            "help": "ECDSA P-256 private-key PEM for --sign (see `astro-mine-hub keygen`)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--key"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "oci",
+            "help": "emit a content-addressed OCI image layout",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--oci"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'dist/assets'",
+            "dest": "out",
+            "help": "output dir (default: dist/assets)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--out"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "path",
+            "help": "path to a SADF document",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "sign",
+            "help": "sign the OCI artifact (requires --oci and --key)",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--sign"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "publish": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "json",
+            "help": "emit machine-readable JSON diagnostics",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--json"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "key",
+            "help": "ECDSA P-256 private-key PEM for --sign (see `astro-mine-hub keygen`)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--key"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'open'",
+            "dest": "namespace",
+            "help": "Hub namespace (default: open)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--namespace"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "path",
+            "help": "path to a SADF document",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "pub",
+            "help": "trusted public-key PEM to re-verify the round-trip after publish",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--pub"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'local'",
+            "dest": "publisher",
+            "help": "publisher id (default: local)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--publisher"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "local OCI-layout registry path, or a remote registry URL (e.g. ghcr.io/astro-mine)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "sign",
+            "help": "cosign-sign the artifact (requires --key)",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--sign"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "render": {
+        "actions": [
+          {
+            "choices": [
+              "articulated",
+              "kinematic",
+              "massmodel"
+            ],
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'kinematic'",
+            "dest": "fidelity",
+            "help": "fidelity tier selecting the visual LOD (default: kinematic \u2014 a thumbnail has no use for the finest mesh)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--fidelity"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": [
+              "glb",
+              "usd"
+            ],
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'glb'",
+            "dest": "format",
+            "help": "preview format (default: glb \u2014 the web/View form; usd for Sim/Studio)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--format"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "json",
+            "help": "emit machine-readable JSON diagnostics",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--json"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "output",
+            "help": "path to write the preview to",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--output",
+              "-o"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "path",
+            "help": "path to a SADF document",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "resolve": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "output",
+            "help": "write to a file instead of stdout",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--output",
+              "-o"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "path",
+            "help": "path to a SADF document",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "resolve-family": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'0.1.0'",
+            "dest": "asset_version",
+            "help": "asset version (default: 0.1.0)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--asset-version"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "family",
+            "help": "family handle (see `fleet families`)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "output",
+            "help": "write to a file instead of stdout",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--output",
+              "-o"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_AppendAction",
+            "const": null,
+            "default": "[]",
+            "dest": "set",
+            "help": "override a parameter",
+            "metavar": "KEY=VALUE",
+            "nargs": null,
+            "option_strings": [
+              "--set"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'custom'",
+            "dest": "variant",
+            "help": "variant name (identity suffix)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--variant"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "validate": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "json",
+            "help": "emit machine-readable JSON diagnostics",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--json"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "path",
+            "help": "path to a SADF document",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "verify": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "layout",
+            "help": "path to an OCI image-layout directory",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "pub",
+            "help": "trusted ECDSA P-256 public-key PEM (pins the signer)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--pub"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      }
+    }
+  },
+  "guard": {
+    "actions": [],
+    "description": "Validate, compile, falsify and sign Guard SafetySpecs. Pass 'anchor' as the spec to use the shipped reference anchor spec.",
+    "verbs": {
+      "compile": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "out",
+            "help": "write the compiled model here (default: stdout)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--out"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "1.0",
+            "dest": "sample_period",
+            "help": "compiled sample period in seconds",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--sample-period"
+            ],
+            "required": false,
+            "type": "float"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'anchor'",
+            "dest": "spec",
+            "help": "spec path, '-', or 'anchor'",
+            "metavar": null,
+            "nargs": "?",
+            "option_strings": [],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "falsify": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "120",
+            "dest": "horizon",
+            "help": "rollout horizon in ticks",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--horizon"
+            ],
+            "required": false,
+            "type": "int"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "120960.0",
+            "dest": "sample_period",
+            "help": "compiled sample period (coarse keeps the survival buffers small)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--sample-period"
+            ],
+            "required": false,
+            "type": "float"
+          },
+          {
+            "choices": null,
+            "cls": "_AppendAction",
+            "const": null,
+            "default": "None",
+            "dest": "seed",
+            "help": "seed to test (repeatable; overrides --trials)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--seed"
+            ],
+            "required": false,
+            "type": "int"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'anchor'",
+            "dest": "spec",
+            "help": "spec path, '-', or 'anchor'",
+            "metavar": null,
+            "nargs": "?",
+            "option_strings": [],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "8",
+            "dest": "trials",
+            "help": "number of seeds 0..N-1 to test",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--trials"
+            ],
+            "required": false,
+            "type": "int"
+          }
+        ],
+        "description": "Search for a counterexample to a SafetySpec: an unshielded control attack that must breach (or the result proves nothing), then the same attack behind the shield. The start and the attack are derived from the spec's own safe set \u2014 there is no scenario to bind, because the plant is synthetic.",
+        "verbs": {}
+      },
+      "sign": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "PosixPath('/mnt/d/MyProjects/AstroMine/files/hub-registry/keys/anchor-dev.key.pem')",
+            "dest": "key",
+            "help": "private key PEM (default: anchor dev key)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--key"
+            ],
+            "required": false,
+            "type": "Path"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "PosixPath('/mnt/d/MyProjects/AstroMine/files/hub-registry/keys/anchor-dev.pub.pem')",
+            "dest": "pub",
+            "help": "public key PEM for --verify (pinned trust)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--pub"
+            ],
+            "required": false,
+            "type": "Path"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'anchor'",
+            "dest": "spec",
+            "help": "spec path, '-', or 'anchor'",
+            "metavar": null,
+            "nargs": "?",
+            "option_strings": [],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "verify",
+            "help": "re-load through the fail-closed signed-load gate",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--verify"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "validate": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "['anchor']",
+            "dest": "spec",
+            "help": "spec path(s), '-' for stdin, or 'anchor'",
+            "metavar": null,
+            "nargs": "*",
+            "option_strings": [],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      }
+    }
+  },
+  "hub": {
+    "actions": [],
+    "description": "Astro-Mine Hub client",
+    "verbs": {
+      "keygen": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "out",
+            "help": "directory to write cosign.key / cosign.pub",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--out"
+            ],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "publish": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "key",
+            "help": "ECDSA private-key PEM to sign with (mint one with `astro-mine-hub keygen`)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--key"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": [
+              "asset",
+              "campaign",
+              "design",
+              "plugin",
+              "policy",
+              "schema",
+              "surrogate",
+              "world"
+            ],
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "kind",
+            "help": null,
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--kind"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_AppendAction",
+            "const": null,
+            "default": "None",
+            "dest": "layer",
+            "help": "payload layer file (repeatable)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--layer"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "manifest",
+            "help": "Core plugin manifest file \u2014 a manifest document (`manifest_version` + `manifest:`, what `astro-mine-core validate` and the shipped examples use) or a bare PluginManifest; YAML or JSON either way",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--manifest"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "name",
+            "help": null,
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--name"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "a local OCI-layout directory (./reg) or a remote OCI registry (ghcr.io/astro-mine, http://localhost:5000)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "version",
+            "help": null,
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--version"
+            ],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "pull": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "no_verify",
+            "help": null,
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--no-verify"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "out",
+            "help": "write to this file (or, with --payload, this directory)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--out"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "payload",
+            "help": "pull the verified payload layers instead of the Core manifest",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--payload"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "reference",
+            "help": null,
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "a local OCI-layout directory (./reg) or a remote OCI registry (ghcr.io/astro-mine, http://localhost:5000)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "trusted_key",
+            "help": "pin the signer to this public-key PEM",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--trusted-key"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "resolve": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "name",
+            "help": null,
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--name"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "a local OCI-layout directory (./reg) or a remote OCI registry (ghcr.io/astro-mine, http://localhost:5000)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "spec",
+            "help": "PEP 440 version specifier",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--spec"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "search": {
+        "actions": [
+          {
+            "choices": [
+              "asset",
+              "campaign",
+              "design",
+              "plugin",
+              "policy",
+              "schema",
+              "surrogate",
+              "world"
+            ],
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "kind",
+            "help": null,
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--kind"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "20",
+            "dest": "limit",
+            "help": null,
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--limit"
+            ],
+            "required": false,
+            "type": "int"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "a local OCI-layout directory (./reg) or a remote OCI registry (ghcr.io/astro-mine, http://localhost:5000)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "semantic",
+            "help": null,
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--semantic"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "text",
+            "help": null,
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--text"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "verify": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "reference",
+            "help": null,
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "a local OCI-layout directory (./reg) or a remote OCI registry (ghcr.io/astro-mine, http://localhost:5000)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "trusted_key",
+            "help": null,
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--trusted-key"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      }
+    }
+  },
+  "learn": {
+    "actions": [
+      {
+        "choices": null,
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "'mappo'",
+        "dest": "algorithm",
+        "help": "registered algorithm tag/name",
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--algorithm"
+        ],
+        "required": false,
+        "type": null
+      },
+      {
+        "choices": null,
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "None",
+        "dest": "batched_world",
+        "help": "importable 'module:attr' zero-arg BatchedWorld factory for --fidelity gpu_vectorized (Sim's Brax/MJX GPU tier, or a JAX surrogate). Without it the vector executor falls back to the sequential CPU loop.",
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--batched-world"
+        ],
+        "required": false,
+        "type": null
+      },
+      {
+        "choices": null,
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "None",
+        "dest": "config_json",
+        "help": "path to a TrainConfig JSON (overrides flags)",
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--config-json"
+        ],
+        "required": false,
+        "type": null
+      },
+      {
+        "choices": null,
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "None",
+        "dest": "env_factory",
+        "help": "importable 'module:attr' zero-arg SwarmEnv factory (a Sim-backed Core world)",
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--env-factory"
+        ],
+        "required": true,
+        "type": null
+      },
+      {
+        "choices": null,
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "None",
+        "dest": "export",
+        "help": "export the trained policy into this content-addressed store directory (<dir>/<hex>/{model.onnx,policy_package.json}, one entry per agent). Relative paths are resolved. Needs the [export] extra",
+        "metavar": "DIR",
+        "nargs": null,
+        "option_strings": [
+          "--export"
+        ],
+        "required": false,
+        "type": "<lambda>"
+      },
+      {
+        "choices": [
+          "onnx"
+        ],
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "'onnx'",
+        "dest": "export_format",
+        "help": "exported artifact format; ONNX is the only cross-component policy artifact",
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--export-format"
+        ],
+        "required": false,
+        "type": null
+      },
+      {
+        "choices": null,
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "'0.1.0'",
+        "dest": "export_version",
+        "help": "semver stamped on the exported PolicyPackage (default 0.1.0)",
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--export-version"
+        ],
+        "required": false,
+        "type": null
+      },
+      {
+        "choices": [
+          "gpu_vectorized",
+          "sim_high",
+          "surrogate"
+        ],
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "'sim_high'",
+        "dest": "fidelity",
+        "help": "rollout fidelity tier for this run / curriculum stage",
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--fidelity"
+        ],
+        "required": false,
+        "type": null
+      },
+      {
+        "choices": null,
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "None",
+        "dest": "hidden_sizes",
+        "help": "comma-separated MLP widths, e.g. 64,64",
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--hidden-sizes"
+        ],
+        "required": false,
+        "type": null
+      },
+      {
+        "choices": null,
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "2",
+        "dest": "iterations",
+        "help": null,
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--iterations"
+        ],
+        "required": false,
+        "type": "int"
+      },
+      {
+        "choices": null,
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "1",
+        "dest": "num_workers",
+        "help": "KubeRay rollout workers / vector env copies (1 = tier-1 in-process)",
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--num-workers"
+        ],
+        "required": false,
+        "type": "int"
+      },
+      {
+        "choices": null,
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "None",
+        "dest": "output",
+        "help": "write the run report JSON here (default stdout)",
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--output"
+        ],
+        "required": false,
+        "type": null
+      },
+      {
+        "choices": null,
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "None",
+        "dest": "ray_address",
+        "help": "Ray cluster address for a distributed run (default $RAY_ADDRESS)",
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--ray-address"
+        ],
+        "required": false,
+        "type": null
+      },
+      {
+        "choices": null,
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "32",
+        "dest": "rollout_steps",
+        "help": null,
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--rollout-steps"
+        ],
+        "required": false,
+        "type": "int"
+      },
+      {
+        "choices": null,
+        "cls": "_StoreAction",
+        "const": null,
+        "default": "0",
+        "dest": "seed",
+        "help": null,
+        "metavar": null,
+        "nargs": null,
+        "option_strings": [
+          "--seed"
+        ],
+        "required": false,
+        "type": "int"
+      }
+    ],
+    "description": "Tier-1 training entrypoint + the RayJob entrypoint (RM-P1-LEARN-04; learn.md \u00a72.1, \u00a77).\n\nThe one command a `pip install`ed researcher runs to train a baseline on a single\nworkstation with no cloud (learn.md \u00a77 tier 1), and \u2014 unchanged \u2014 the entrypoint Cloud wraps\nin a KubeRay ``RayJob`` for scale-out (cloud.md). It selects the rollout executor from the\n``TrainConfig`` fidelity axis (in-process :class:`LocalExecutor`, distributed\n:class:`KubeRayExecutor`, or batched :class:`~astro_mine.learn.envs.vector.VectorExecutor`) \u2014\n\"the same code with a different executor, never a fork\" \u2014 trains the chosen baseline, and\nemits the learning curve + throughput + the produced-policy provenance.\n\nLearn never imports Cloud. Cloud injects its reproducibility envelope \u2014 the **RunContext**\n(cloud.md: MLflow run id, image digest, Core interface version, lockfile, input hashes) \u2014 as\nenvironment variables; this module *reads* that envelope (:class:`RunContext.from_env`) and\nfolds it into the produced policy's Core :class:`~astro_mine.core.registry.Provenance`\n(:func:`apply_run_context`), completing the build-time + run-time reproducibility chain.\n\nThe world is supplied as an importable ``module:attr`` zero-arg **env factory** (``--env-factory``)\nthat yields either a :class:`~astro_mine.learn.envs.SwarmEnv` or the Core-typed\n``(Environment, {AgentId: Asset})`` pair a Learn-free producer hands over \u2014 so the entrypoint\nstays Sim-free (a real run points it at a Sim-backed factory; the CI smoke points it at the fake\nworld). The pair form is what lets the producing package avoid importing Learn while still\nsupplying the SADF the per-agent spaces are derived from.",
+    "verbs": {}
+  },
+  "link": {
+    "actions": [],
+    "description": "Astro-Mine-Link tools.",
+    "verbs": {
+      "publish": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "input_hashes",
+            "help": "JSON object of pinned-input digests (kernels/terrain/nodes/epoch/config).",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--input-hashes"
+            ],
+            "required": false,
+            "type": "Path"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "key",
+            "help": "Cosign ECDSA-P256 private key (PEM); signs the artifact. Required \u2014 Hub admits no unsigned content. Mint one with `astro-mine-hub keygen`.",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--key"
+            ],
+            "required": true,
+            "type": "Path"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "name",
+            "help": "Artifact name (the stable content id).",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--name"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "plan",
+            "help": "ContactPlan in Core wire form (.pb).",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": "Path"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "Local OCI-layout registry path, or a remote registry URL (e.g. ghcr.io/astro-mine).",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "scenario_id",
+            "help": "The scenario this comms model belongs to.",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--scenario-id"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "version",
+            "help": "Artifact version (SemVer).",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--version"
+            ],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      }
+    }
+  },
+  "mind": {
+    "actions": [],
+    "description": "Validate, compose, and list Mind stack specs. A bare stack name resolves against the shipped reference stacks (see 'astro-mine-mind stacks').",
+    "verbs": {
+      "compose": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "stack",
+            "help": "stack path, '-', or a reference stack name",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "stacks": {
+        "actions": [],
+        "description": "",
+        "verbs": {}
+      },
+      "validate": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "stack",
+            "help": "stack path(s), '-' for stdin, or a reference stack name",
+            "metavar": null,
+            "nargs": "+",
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      }
+    }
+  },
+  "prospect": {
+    "actions": [],
+    "description": "Astro-Mine-Prospect tools.",
+    "verbs": {
+      "publish": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'shackleton_water_ice_v1'",
+            "dest": "name",
+            "help": "Prior recipe to publish (default: the anchor).",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--name"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "private_key",
+            "help": "ECDSA P-256 signing key (PEM); a fresh keypair is generated if omitted.",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--private-key"
+            ],
+            "required": false,
+            "type": "Path"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "public_key_out",
+            "help": "Write the generated public key (PEM) here (only when a key is generated).",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--public-key-out"
+            ],
+            "required": false,
+            "type": "Path"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "Local OCI-layout registry path, or a remote registry URL (e.g. ghcr.io/astro-mine).",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": true,
+            "type": "Path"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "version",
+            "help": "Artifact version (default: the recipe version).",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--version"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      }
+    }
+  },
+  "sim": {
+    "actions": [],
+    "description": "The Astro-Mine-Sim command line and container entrypoint (RM-P0-SIM-11, RM-P0-CLOUD-01).",
+    "verbs": {
+      "record": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "metakernel",
+            "help": "SPICE metakernel (.tm) furnished before the run, for body-fixed frames (default: $ASTRO_MINE_SPICE_METAKERNEL; kernels come from NAIF and are not shipped)",
+            "metavar": "PATH",
+            "nargs": null,
+            "option_strings": [
+              "--metakernel"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "PosixPath('run.mcap')",
+            "dest": "out",
+            "help": "MCAP output path",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--out"
+            ],
+            "required": false,
+            "type": "Path"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "scenario_file",
+            "help": "path to a Sim Scenario JSON document",
+            "metavar": "PATH",
+            "nargs": null,
+            "option_strings": [
+              "--scenario",
+              "--scenario-file"
+            ],
+            "required": true,
+            "type": "Path"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "seed",
+            "help": "override the scenario's seed",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--seed"
+            ],
+            "required": false,
+            "type": "int"
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "run": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "metakernel",
+            "help": "SPICE metakernel (.tm) furnished before the run, for body-fixed frames (default: $ASTRO_MINE_SPICE_METAKERNEL; kernels come from NAIF and are not shipped)",
+            "metavar": "PATH",
+            "nargs": null,
+            "option_strings": [
+              "--metakernel"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "PosixPath('run.mcap')",
+            "dest": "out",
+            "help": "MCAP output path",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--out"
+            ],
+            "required": false,
+            "type": "Path"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "local OCI-layout Hub registry for pinned content (default: $ASTRO_MINE_HUB_REGISTRY)",
+            "metavar": "PATH",
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "scenario_id",
+            "help": "a Bench ScenarioSpec id (from `astro-mine-bench list`)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "seed",
+            "help": "episode seed (default: 0)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--seed"
+            ],
+            "required": false,
+            "type": "int"
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      }
+    }
+  },
+  "studio": {
+    "actions": [],
+    "description": "Astro-Mine Studio \u2014 the design front door.",
+    "verbs": {
+      "serve": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "cache_dir",
+            "help": "materialized-content cache ($ASTRO_MINE_STUDIO_CACHE)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--cache-dir"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "'127.0.0.1'",
+            "dest": "host",
+            "help": "bind host (default: 127.0.0.1)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--host"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "no_ui",
+            "help": "do not mount the UI",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--no-ui"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "8000",
+            "dest": "port",
+            "help": "bind port (default: 8000)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--port"
+            ],
+            "required": false,
+            "type": "int"
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "local OCI-layout registry path (default: $ASTRO_MINE_HUB_REGISTRY)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreFalseAction",
+            "const": "False",
+            "default": "True",
+            "dest": "seed",
+            "help": "do not open on the seeded example study",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--no-seed"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "signing_key",
+            "help": "PEM private key published campaigns are signed with (default: <registry>/keys/cosign.key or $ASTRO_MINE_STUDIO_SIGNING_KEY)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--signing-key"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "trusted_key",
+            "help": "PEM public key that pulled content is verified against (default: <registry>/keys/cosign.pub or $ASTRO_MINE_STUDIO_TRUSTED_KEY)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--trusted-key"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "ui_dir",
+            "help": "built UI directory (default: <cwd>/ui/dist-harness)",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--ui-dir"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      }
+    }
+  },
+  "worlds": {
+    "actions": [
+      {
+        "choices": null,
+        "cls": "_VersionAction",
+        "const": null,
+        "default": "'==SUPPRESS=='",
+        "dest": "version",
+        "help": "show program's version number and exit",
+        "metavar": null,
+        "nargs": 0,
+        "option_strings": [
+          "--version"
+        ],
+        "required": false,
+        "type": null
+      }
+    ],
+    "description": "Astro-Mine Worlds toolchain.",
+    "verbs": {
+      "publish": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "bundle",
+            "help": "Path to a built world-bundle directory (has world.json).",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "key",
+            "help": "Cosign ECDSA-P256 private key (PEM) path.",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--key"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "name",
+            "help": "Artifact name (default: the world_id).",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--name"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "registry",
+            "help": "Local OCI-layout registry path, or a remote registry URL (e.g. ghcr.io/astro-mine).",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--registry"
+            ],
+            "required": true,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "version",
+            "help": "Artifact version (default: spec ver).",
+            "metavar": null,
+            "nargs": null,
+            "option_strings": [
+              "--version"
+            ],
+            "required": false,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      },
+      "schema": {
+        "actions": [],
+        "description": "",
+        "verbs": {}
+      },
+      "validate": {
+        "actions": [
+          {
+            "choices": null,
+            "cls": "_StoreTrueAction",
+            "const": "True",
+            "default": "False",
+            "dest": "json",
+            "help": "Machine-readable output.",
+            "metavar": null,
+            "nargs": 0,
+            "option_strings": [
+              "--json"
+            ],
+            "required": false,
+            "type": null
+          },
+          {
+            "choices": null,
+            "cls": "_StoreAction",
+            "const": null,
+            "default": "None",
+            "dest": "path",
+            "help": "Path to a WorldSpec YAML document.",
+            "metavar": null,
+            "nargs": "+",
+            "option_strings": [],
+            "required": true,
+            "type": null
+          }
+        ],
+        "description": "",
+        "verbs": {}
+      }
+    }
+  }
+}

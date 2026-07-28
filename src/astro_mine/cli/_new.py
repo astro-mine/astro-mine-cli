@@ -176,7 +176,7 @@ class _Scaffolder:
 
         A kind the platform does not have is a typo. A kind whose owner is absent is an install.
         And a kind whose owner is *present but offers no scaffold* is neither: telling that user to
-        `pip install astro-mine-worlds` when they already have it would be the umbrella lying about
+        `pip install astro-mine worlds` when they already have it would be the umbrella lying about
         an environment it can see. The probe is a metadata read, so distinguishing the two costs
         nothing and imports nothing.
         """

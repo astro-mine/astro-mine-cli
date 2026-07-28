@@ -19,20 +19,26 @@ classifiers = [
   "Intended Audience :: Science/Research",
   "Programming Language :: Python :: 3.12",
 ]
-# EMPTY, DELIBERATELY, AND ENFORCED (tests/test_packaging.py::test_declares_no_runtime_dependencies).
+# EXACTLY ONE, AND ENFORCED (tests/test_packaging.py::test_depends_only_on_the_platform).
 #
-# This is the one component package with no runtime dependencies -- not even astro-mine-core.
-# RFC-0011 §"Alternatives considered" (a) rejected the umbrella-that-depends-on-everything
-# precisely because `pip install` for one verb would drag Ray, a Rust toolchain, CP-SAT and SPICE
-# onto the machine, breaking the local tier that "MUST always work" (conventions.md §7).
+# This package used to declare no runtime dependencies at all. RFC-0011 §"Alternatives considered"
+# (a) rejected the umbrella-that-depends-on-everything because `pip install` for one verb would
+# drag Ray, a Rust toolchain, CP-SAT and SPICE onto the machine, breaking the local tier that
+# "MUST always work" (conventions.md §7).
 #
-# The umbrella therefore depends on the entry-point *group name* -- `astro_mine.cli` -- and never
-# on a provider. Discovery reads installed distribution metadata (stdlib importlib.metadata) and
-# argparse builds the parser; a provider is imported only when its verb actually runs. A component
-# stays independently installable, and a machine with one component installed pays for one.
+# Consolidation dissolved that premise. `astro-mine-platform` is ONE wheel that already carries
+# Ray, CP-SAT, SPICE, Cap'n Proto and a compiled Rust extension, so there is no longer an install
+# this dependency makes heavier -- the cost §1 refused to pay is now paid by the platform simply
+# existing. Meanwhile the entry-point indirection it bought decoupled nothing: every component is
+# always present, so first-party federation was a metadata round-trip that hid which function ran.
 #
-# Adding a dependency here is a design change, not a convenience. Take it through the RFC.
-dependencies = []
+# What §1a actually protected is kept, and by a mechanism that still works: you pay the import
+# cost of the command you ran and nothing else. `astro-mine --help` imports no component
+# (tests/test_laziness.py asserts the negative), because the top-level listing is static strings
+# and the dispatcher imports exactly one module -- the one the user named.
+#
+# Adding a SECOND dependency here is a design change, not a convenience. Take it through the RFC.
+dependencies = ["astro-mine-platform"]
 
 [project.scripts]
 # The single umbrella entry point. `astro-mine <verb>` is the discoverable surface
@@ -43,6 +49,18 @@ astro-mine = "astro_mine.cli:main"
 Homepage = "https://github.com/astro-mine/astro-mine-cli"
 Documentation = "https://github.com/astro-mine/docs"
 Issues = "https://github.com/astro-mine/astro-mine-cli/issues"
+
+[tool.uv.sources]
+# LOCAL PATH WHILE THE PAIRED PR IS OPEN. astro-mine-cli#12 and astro-mine-platform#1 are two
+# halves of one change: the platform must stop shipping `astro_mine/cli/` before this package can
+# depend on it, because both install into the PEP-420 `astro_mine` namespace and would otherwise
+# land two distributions' files on one import path.
+#
+# So this points at the sibling checkout, which is the only way to exercise all 50 verbs before
+# either PR merges. FLIP TO A GIT PIN BEFORE MERGE -- the pattern every other consumer uses:
+#
+#   astro-mine-platform = { git = "https://github.com/astro-mine/astro-mine-platform.git", rev = "<merged sha>" }
+astro-mine-platform = { path = "../astro-mine-platform", editable = true }
 
 [dependency-groups]
 dev = [

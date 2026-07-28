@@ -36,9 +36,9 @@ _USAGE_ERROR = 2
 
 _NO_VALIDATORS = (
     "no validators are installed, so `astro-mine validate` has nothing to route to. Install the "
-    "package that owns the format you are checking — `astro-mine-core` for SADF, ObjectiveSpec, "
-    "MissionSpec, Plan, plugin manifests, PolicyPackage and RunProvenance; `astro-mine-guard` for "
-    "a SafetySpec; `astro-mine-mind` for a stack spec."
+    "package that owns the format you are checking — `astro-mine core` for SADF, ObjectiveSpec, "
+    "MissionSpec, Plan, plugin manifests, PolicyPackage and RunProvenance; `astro-mine guard` for "
+    "a SafetySpec; `astro-mine mind` for a stack spec."
 )
 
 
@@ -80,7 +80,7 @@ class _Validate:
                     f"astro-mine validate: no installed validator recognizes {path}. "
                     f"Installed: {', '.join(v.name for v in validators)}. A document is never "
                     f"checked against a guessed schema — name its format to the owning CLI "
-                    f"instead (e.g. `astro-mine-core validate --kind …`).",
+                    f"instead (e.g. `astro-mine core validate --kind …`).",
                     file=sys.stderr,
                 )
                 status = max(status, 1)
