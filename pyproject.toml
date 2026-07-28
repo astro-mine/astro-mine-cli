@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "astro-mine-cli"
 dynamic = ["version"]
-description = "Astro-Mine-CLI — the discoverable umbrella CLI: `astro-mine <verb>`, a near-zero-dependency dispatcher over the astro_mine.cli entry-point group."
+description = "Astro-Mine-CLI — the Astro-Mine command line: one executable, `astro-mine <component> <verb>`, over the astro-mine-platform library."
 readme = "README.md"
 requires-python = ">=3.12"
 license = "Apache-2.0"
@@ -19,30 +19,47 @@ classifiers = [
   "Intended Audience :: Science/Research",
   "Programming Language :: Python :: 3.12",
 ]
-# EMPTY, DELIBERATELY, AND ENFORCED (tests/test_packaging.py::test_declares_no_runtime_dependencies).
+# EXACTLY ONE, AND ENFORCED (tests/test_packaging.py::test_depends_only_on_the_platform).
 #
-# This is the one component package with no runtime dependencies -- not even astro-mine-core.
-# RFC-0011 §"Alternatives considered" (a) rejected the umbrella-that-depends-on-everything
-# precisely because `pip install` for one verb would drag Ray, a Rust toolchain, CP-SAT and SPICE
-# onto the machine, breaking the local tier that "MUST always work" (conventions.md §7).
+# This package used to declare no runtime dependencies at all. RFC-0011 §"Alternatives considered"
+# (a) rejected the umbrella-that-depends-on-everything because `pip install` for one verb would
+# drag Ray, a Rust toolchain, CP-SAT and SPICE onto the machine, breaking the local tier that
+# "MUST always work" (conventions.md §7).
 #
-# The umbrella therefore depends on the entry-point *group name* -- `astro_mine.cli` -- and never
-# on a provider. Discovery reads installed distribution metadata (stdlib importlib.metadata) and
-# argparse builds the parser; a provider is imported only when its verb actually runs. A component
-# stays independently installable, and a machine with one component installed pays for one.
+# Consolidation dissolved that premise. `astro-mine-platform` is ONE wheel that already carries
+# Ray, CP-SAT, SPICE, Cap'n Proto and a compiled Rust extension, so there is no longer an install
+# this dependency makes heavier -- the cost §1 refused to pay is now paid by the platform simply
+# existing. Meanwhile the entry-point indirection it bought decoupled nothing: every component is
+# always present, so first-party federation was a metadata round-trip that hid which function ran.
 #
-# Adding a dependency here is a design change, not a convenience. Take it through the RFC.
-dependencies = []
+# What §1a actually protected is kept, and by a mechanism that still works: you pay the import
+# cost of the command you ran and nothing else. `astro-mine --help` imports no component
+# (tests/test_dispatch_all_verbs.py asserts the negative), because the top-level listing is static strings
+# and the dispatcher imports exactly one module -- the one the user named.
+#
+# Adding a SECOND dependency here is a design change, not a convenience. Take it through the RFC.
+dependencies = ["astro-mine-platform"]
 
 [project.scripts]
-# The single umbrella entry point. `astro-mine <verb>` is the discoverable surface
-# (conventions.md §13, normative); every component CLI keeps working when invoked directly.
+# The ONE executable this distribution installs, and the only one the platform has.
+# `astro-mine <component> <verb>` (conventions.md §13, normative, as amended by
+# astro-mine-cli#12): the per-component binaries it used to sit alongside are gone.
 astro-mine = "astro_mine.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/astro-mine/astro-mine-cli"
 Documentation = "https://github.com/astro-mine/docs"
 Issues = "https://github.com/astro-mine/astro-mine-cli/issues"
+
+[tool.uv.sources]
+# Pinned to the commit that removed the platform's CLI surface (astro-mine-platform#1). A
+# **rev**, not a branch: `uv.lock` records the resolved commit either way, but a rev makes the
+# pin readable without opening the lock, and the platform publishes no tags yet.
+#
+# This must not float. The two repos are one change split in half -- the platform stops
+# shipping `astro_mine/cli/`, this package starts providing it -- so a pin that moved could
+# resolve a platform that still installs files at this package's import path.
+astro-mine-platform = { git = "https://github.com/astro-mine/astro-mine-platform.git", rev = "df45842518c7e53c1110be1f5549d103e2db0105" }
 
 [dependency-groups]
 dev = [

@@ -22,22 +22,15 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Mapping
-from importlib.metadata import EntryPoint, PackageNotFoundError, version
 from types import MappingProxyType
 
-from astro_mine.cli._discovery import describe_provider
-from astro_mine.cli._manifest import (
-    FIRST_PARTY_KINDS,
-    FIRST_PARTY_PLUGIN_KINDS,
-    FirstPartyKind,
-)
 from astro_mine.cli._protocol import InvalidSubcommandError, Subcommand
 from astro_mine.cli._scaffolds import (
     DOCUMENT_SCAFFOLD_GROUP,
     PLUGIN_SCAFFOLD_GROUP,
+    Provider,
     ScaffoldCollisionError,
     discover_scaffolds,
-    load_scaffold,
 )
 from astro_mine.cli._templates import CLI_PLUGIN_SCAFFOLD
 
@@ -54,20 +47,17 @@ _HELP_FLAGS = frozenset({"-h", "--help"})
 _NO_BUILTINS: Mapping[str, Subcommand] = MappingProxyType({})
 
 
-def _is_installed(distribution: str) -> bool:
-    """Is this distribution present? A metadata read — no import, so the listing stays free."""
-    try:
-        version(distribution)
-    except PackageNotFoundError:
-        return False
-    return True
-
-
 class _Scaffolder:
     """The shared body of both verbs: list kinds, or route one kind to its owner.
 
-    Parameterized by group rather than duplicated, because the two verbs differ in exactly three
-    things — the group they read, the table they degrade from, and the words in their messages.
+    Parameterized by group rather than duplicated, because the two verbs now differ in exactly
+    two things -- the group they read and the words in their messages.
+
+    **The degradation machinery is gone.** This class used to carry a static kind→distribution
+    table so it could answer *"`astro-mine new stack` needs astro-mine-mind — pip install it"*,
+    and a second branch for *"that component is installed but offers no scaffold"*. Neither
+    state can occur now: every first-party kind ships in this distribution's own
+    :mod:`astro_mine.cli.scaffolds`, so a kind is either present or genuinely misspelled.
     """
 
     def __init__(
@@ -75,41 +65,29 @@ class _Scaffolder:
         *,
         command: str,
         group: str,
-        table: Mapping[str, FirstPartyKind],
         builtins: Mapping[str, Subcommand] = _NO_BUILTINS,
         noun: str = "kind",
     ) -> None:
         self.command = command
         self.group = group
-        self.table = table
         self.builtins = builtins
         self.noun = noun
 
     def dispatch(self, kind: str, rest: list[str]) -> int:
         """Load the one scaffold that owns ``kind`` and hand it the rest of the command line."""
         try:
-            discovered = discover_scaffolds(self.group)
+            available = self._available()
         except ScaffoldCollisionError as exc:
             print(f"astro-mine {self.command}: {exc}", file=sys.stderr)
             return _USAGE_ERROR
 
-        shadowed = sorted(set(discovered) & set(self.builtins))
-        if shadowed:
-            names = ", ".join(f"{k!r} ({describe_provider(discovered[k])})" for k in shadowed)
-            print(
-                f"astro-mine {self.command}: {names} shadows a {self.noun} the umbrella owns; "
-                f"uninstall the package or ask it to rename its `{self.group}` entry point",
-                file=sys.stderr,
-            )
-            return _USAGE_ERROR
-
         scaffold = self.builtins.get(kind)
         if scaffold is None:
-            entry = discovered.get(kind)
-            if entry is None:
-                return self._report_missing(kind, discovered)
+            provider = available.get(kind)
+            if provider is None:
+                return self._report_unknown(kind, available)
             try:
-                scaffold = load_scaffold(entry, group=self.group)
+                scaffold = provider.load()
             except InvalidSubcommandError as exc:
                 print(f"astro-mine {self.command}: {exc}", file=sys.stderr)
                 return _USAGE_ERROR
@@ -123,91 +101,45 @@ class _Scaffolder:
         status = scaffold.run(parser.parse_args(rest))
         return 0 if status is None else int(status)
 
+    def _available(self) -> Mapping[str, Provider]:
+        """Every kind this environment offers, first-party and third-party alike."""
+        discovered = dict(discover_scaffolds(self.group))
+        shadowed = sorted(set(discovered) & set(self.builtins))
+        if shadowed:
+            raise ScaffoldCollisionError(
+                f"{', '.join(repr(k) for k in shadowed)} shadows a {self.noun} this CLI owns; "
+                f"uninstall the package or ask it to rename its `{self.group}` entry point"
+            )
+        return discovered
+
     def listing(self) -> str:
-        """What `astro-mine <command>` prints with no kind — built without importing anything."""
-        discovered = discover_scaffolds(self.group)
-        available = sorted({*discovered, *self.builtins})
-        absent = sorted(k for k in self.table if k not in discovered and k not in self.builtins)
-        width = max((len(k) for k in (*available, *absent)), default=0) + 2
+        """What `astro-mine <command>` prints with no kind — built without importing a scaffold."""
+        available = self._available()
+        names = sorted({*available, *self.builtins})
+        width = max((len(k) for k in names), default=0) + 2
         lines = [f"usage: astro-mine {self.command} <{self.noun}> <output> [options]", ""]
-
-        if available:
-            lines.append(f"{self.noun.title()}s:")
-            lines += [f"  {kind:<{width}}{self._summarize(kind, discovered)}" for kind in available]
-        else:
-            lines.append(f"No {self.noun}s are available in this environment yet.")
-
-        # The same split the missing-kind path makes, and for the same reason: a kind whose owner is
-        # installed but silent is not "from a component that is not installed here". Saying so would
-        # be the listing contradicting what running the command tells you thirty seconds later, and
-        # sending the user to install what they already have.
-        uninstalled = [kind for kind in absent if not _is_installed(self.table[kind].distribution)]
-        unoffered = [kind for kind in absent if kind not in uninstalled]
-
-        for heading, kinds in (
-            ("Available from components that are not installed here:", uninstalled),
-            ("Known, but the component that owns them offers no scaffold yet:", unoffered),
-        ):
-            if kinds:
-                lines += [
-                    "",
-                    heading,
-                    *(
-                        f"  {kind:<{width}}{self.table[kind].help} "
-                        f"[{self.table[kind].distribution}]"
-                        for kind in kinds
-                    ),
-                ]
+        lines.append(f"{self.noun.title()}s:")
+        lines += [f"  {kind:<{width}}{self._summarize(kind, available)}" for kind in names]
         lines += ["", f"`astro-mine {self.command} <{self.noun}> --help` shows its own options."]
         return "\n".join(lines)
 
-    def _summarize(self, kind: str, discovered: Mapping[str, EntryPoint]) -> str:
-        """One line about an available kind — never from the scaffold: that would cost an import."""
+    def _summarize(self, kind: str, available: Mapping[str, Provider]) -> str:
+        """One line about a kind — never from the scaffold itself: that would cost an import."""
         builtin = self.builtins.get(kind)
-        if builtin is not None:
-            return builtin.help
-        known = self.table.get(kind)
-        if known is not None:
-            return known.help
-        return f"provided by {describe_provider(discovered[kind])}"
+        return builtin.help if builtin is not None else available[kind].help
 
-    def _report_missing(self, kind: str, discovered: Mapping[str, EntryPoint]) -> int:
-        """Say which of the two things went wrong — they have different fixes.
+    def _report_unknown(self, kind: str, available: Mapping[str, Provider]) -> int:
+        """A kind nobody offers. With every component present, that is a typo -- so say so."""
+        import difflib
 
-        A kind the platform does not have is a typo. A kind whose owner is absent is an install.
-        And a kind whose owner is *present but offers no scaffold* is neither: telling that user to
-        `pip install astro-mine-worlds` when they already have it would be the umbrella lying about
-        an environment it can see. The probe is a metadata read, so distinguishing the two costs
-        nothing and imports nothing.
-        """
-        known = self.table.get(kind)
-        if known is None:
-            available = (
-                ", ".join(sorted({*discovered, *self.builtins})) or "none in this environment"
-            )
-            print(
-                f"astro-mine {self.command}: unknown {self.noun} {kind!r} (available: {available})",
-                file=sys.stderr,
-            )
-            return _USAGE_ERROR
-        try:
-            installed = version(known.distribution)
-        except PackageNotFoundError:
-            print(
-                f"`astro-mine {self.command} {kind}` needs {known.distribution} — install it with "
-                f"`pip install {known.distribution}` (or `uv add {known.distribution}`), "
-                f"then re-run.",
-                file=sys.stderr,
-            )
-        else:
-            print(
-                f"`astro-mine {self.command} {kind}` needs a {kind!r} scaffold from "
-                f"{known.distribution}, but {known.distribution} {installed} is installed and "
-                f"offers none — that component does not support scaffolding this yet. Its own CLI "
-                f"(`astro-mine-{known.distribution.removeprefix('astro-mine-')} --help`) may still "
-                f"be able to author one.",
-                file=sys.stderr,
-            )
+        names = sorted({*available, *self.builtins})
+        close = difflib.get_close_matches(kind, names, n=1)
+        hint = f" (did you mean {close[0]!r}?)" if close else ""
+        print(
+            f"astro-mine {self.command}: unknown {self.noun} {kind!r}{hint}; "
+            f"available: {', '.join(names)}",
+            file=sys.stderr,
+        )
         return _USAGE_ERROR
 
 
@@ -215,7 +147,7 @@ class _New:
     name = "new"
     help = "scaffold an authored document (routed to the format's owner)"
 
-    _scaffolder = _Scaffolder(command="new", group=DOCUMENT_SCAFFOLD_GROUP, table=FIRST_PARTY_KINDS)
+    _scaffolder = _Scaffolder(command="new", group=DOCUMENT_SCAFFOLD_GROUP)
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.description = (
@@ -252,7 +184,6 @@ class _Plugin:
     _scaffolder = _Scaffolder(
         command="plugin new",
         group=PLUGIN_SCAFFOLD_GROUP,
-        table=FIRST_PARTY_PLUGIN_KINDS,
         builtins={CLI_PLUGIN_SCAFFOLD.name: CLI_PLUGIN_SCAFFOLD},
     )
 

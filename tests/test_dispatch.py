@@ -6,7 +6,6 @@ import pytest
 
 from _verbs import make_entry_point
 from astro_mine.cli import main
-from astro_mine.cli._manifest import FIRST_PARTY_VERBS
 
 
 @pytest.fixture
@@ -53,14 +52,6 @@ def test_a_verbs_own_help_comes_from_the_provider(capsys, verbs) -> None:  # typ
     assert "--exit-code" in out
 
 
-def test_a_known_verb_with_no_provider_names_the_install(capsys, verbs) -> None:  # type: ignore[no-untyped-def]
-    """The case pure discovery cannot handle: with astro-mine-bench absent there is no `score`
-    entry point at all, so only the static manifest can turn this into an actionable message."""
-    assert main(["score"], verbs=verbs) == 2
-    err = capsys.readouterr().err
-    assert "astro-mine score" in err
-    assert "pip install astro-mine-bench" in err
-    assert "Traceback" not in err
 
 
 def test_an_unknown_verb_lists_what_is_available(capsys, verbs) -> None:  # type: ignore[no-untyped-def]
@@ -70,7 +61,7 @@ def test_an_unknown_verb_lists_what_is_available(capsys, verbs) -> None:  # type
         main(["frobnicate"], verbs=verbs)
     assert excinfo.value.code == 2
     err = capsys.readouterr().err
-    assert "unknown verb 'frobnicate'" in err
+    assert "unknown component or verb 'frobnicate'" in err
     assert "echo" in err
 
 
@@ -100,30 +91,22 @@ def test_a_verb_collision_is_reported_not_raised(capsys, monkeypatch) -> None:  
     assert "Traceback" not in err
 
 
-def test_top_level_help_lists_installed_and_absent_verbs(capsys, verbs) -> None:  # type: ignore[no-untyped-def]
-    """On a bare install this listing is the only map of the platform a newcomer has (UC-A3), so
-    it names what is not installed too — clearly marked, never as if it were runnable."""
+def test_top_level_help_lists_components_routers_and_third_party_verbs(capsys, verbs) -> None:  # type: ignore[no-untyped-def]
+    """The listing is the map of the platform (UC-A3), and it names all three sources.
+
+    It used to also list first-party verbs that were *not installed*, with the distribution to
+    `pip install` for each. That section is gone because the state is gone: every component
+    ships in the one distribution this package depends on, so nothing first-party can be
+    absent. What remains is the honest set — 13 components, 3 routers, and whatever third
+    parties have registered, each described from metadata rather than by importing it.
+    """
     assert main([], verbs=verbs) == 0
     out = capsys.readouterr().out
     assert "echo" in out
     assert "provided by _verbs:ECHO" in out  # third-party: described from metadata
-    assert "not installed here" in out
-    assert "score" in out and "astro-mine-bench" in out
+    assert "Components" in out and "Routers" in out
+    assert "bench" in out and "fleet" in out
 
 
-def test_an_installed_first_party_verb_is_described_from_the_manifest(capsys) -> None:  # type: ignore[no-untyped-def]
-    """The manifest's second job. Bench's `score` is installed here, and its one-line description
-    still comes from the static table — because reading it from the provider would mean importing
-    Bench (and every other installed component) to render a help screen."""
-    installed = {"score": make_entry_point("score", "ECHO")}
-    assert main([], verbs=installed) == 0
-    listing, _, _ = capsys.readouterr().out.partition("not installed here")
-    assert FIRST_PARTY_VERBS["score"].help in listing
-    assert "provided by" not in listing  # the metadata fallback is for third parties only
 
 
-def test_first_party_help_text_does_not_require_importing_the_provider(verbs) -> None:  # type: ignore[no-untyped-def]
-    """The manifest exists so the listing is free. If a first-party verb's description ever came
-    from its Subcommand, rendering help would import every installed component."""
-    assert FIRST_PARTY_VERBS["score"].distribution == "astro-mine-bench"
-    assert FIRST_PARTY_VERBS["score"].help

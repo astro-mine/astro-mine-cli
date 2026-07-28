@@ -1,22 +1,32 @@
-"""The top-level parser and the dispatch loop.
+"""The root parser and the dispatch loop — `astro-mine <component> <verb>`.
 
-**Why parsing happens in two phases.** The umbrella cannot build a complete argparse tree up
-front: filling in one verb's arguments means calling that verb's ``add_arguments``, which means
-importing its component — so a single-phase parser would import every installed component just to
-show ``--help``. Instead, phase one parses only *which verb* (everything after it is
-:data:`argparse.REMAINDER`), and phase two loads that one verb and lets it parse its own tail.
-The user pays for the import of the command they actually ran, and for nothing else
-(RFC-0011 §1a).
+**One grammar.** Every command the platform ships is addressed the same way: the component
+that owns it, then the verb. The only exceptions are the three *routers* — ``validate``,
+``new`` and ``plugin new`` — which exist precisely because deciding which component owns a
+document or a kind is the one job no component can do for itself.
 
-The cost of this design is that the top-level ``--help`` cannot show a verb's own ``help`` string.
-That is what :mod:`astro_mine.cli._manifest` is for: first-party descriptions are static strings,
-so the listing stays free, and a verb's complete help comes from the provider on
-``astro-mine <verb> --help``.
+Before this package depended on the platform there were three addressing rules at once:
+eight components reachable as a passthrough, four with selected verbs promoted to the top
+level, and one (`core`) not reachable at all — so `astro-mine core validate`, `hub resolve`,
+`bench zoo-sync` and `worlds schema` simply could not be typed. One root, one grammar
+(astro-mine-cli#12).
+
+**Why parsing still happens in two phases.** Filling in a component's arguments means
+importing that component's CLI module, which imports the platform package behind it. A
+single-phase parser would import all thirteen just to render ``--help``. So phase one parses
+only *which* component (everything after it is :data:`argparse.REMAINDER`), and phase two
+imports that one module and lets it parse its own tail. The user pays for the command they
+ran and nothing else — the one property of RFC-0011 §1a worth carrying past consolidation.
+
+The cost is that top-level ``--help`` cannot show a component's own verbs. That is what
+:mod:`astro_mine.cli._registry` is for: the descriptions are static strings, so the listing
+stays free, and the real help comes from ``astro-mine <component> --help``.
 """
 
 from __future__ import annotations
 
 import argparse
+import importlib
 import sys
 from collections.abc import Mapping, Sequence
 from importlib.metadata import EntryPoint
@@ -27,62 +37,60 @@ from astro_mine.cli._discovery import (
     discover_verbs,
     load_verb,
 )
-from astro_mine.cli._manifest import FIRST_PARTY_VERBS, install_hint
 from astro_mine.cli._new import new as _new_verb
 from astro_mine.cli._new import plugin as _plugin_verb
 from astro_mine.cli._protocol import InvalidSubcommandError, Subcommand
+from astro_mine.cli._registry import COMPONENTS
 from astro_mine.cli._validate import validate as _validate_verb
 
 __all__ = ["build_parser", "main"]
 
-_DESCRIPTION = "The Astro-Mine umbrella CLI — one front door to the platform's component CLIs."
+_DESCRIPTION = (
+    "The Astro-Mine CLI — one front door to the platform: `astro-mine <component> <verb>`."
+)
 
-#: Exit status for a usage error, matching argparse's own convention. A verb whose component is
-#: not installed uses it too: the command was well-formed but cannot run in this environment, and
-#: conflating that with the verb's *own* failure codes (which start at 1) would make a script
-#: unable to tell "I am misconfigured" from "the run failed".
+#: Exit status for a usage error, matching argparse's own convention. Kept distinct from the
+#: 1-and-up range a command uses for its *own* failures, so a script can tell "I typed this
+#: wrong" from "the run failed".
 _USAGE_ERROR = 2
 
-#: Verbs the umbrella owns itself. Each is here for a reason rather than for convenience: all three
-#: *route* rather than do, and routing is the one job no component can hold without importing its
-#: siblings (`conventions.md §1.1`). `validate` sends a document to whoever owns its format
-#: (RFC-0011 §6; see _validate.py); `new` and `plugin new` send a scaffold request to whoever owns
-#: the kind (RFC-0011 §7; see _new.py). Nothing else belongs here — a verb that *does* something
-#: belongs to the component that does it.
-#:
-#: Built-ins are seeded like Allocate's solver registry seeds CP-SAT — and collide the same way: a
-#: distribution advertising a verb that shadows one is a hard error naming both, never a silent
-#: winner. Importing this module costs nothing external; only running a verb loads a provider.
-_BUILTIN_VERBS: dict[str, Subcommand] = {
+#: The three verbs this package owns outright. All three *route* rather than do, and routing
+#: is the one job no component can hold without importing its siblings (`conventions.md §1.1`).
+#: `validate` sends a document to whoever owns its format (RFC-0011 §6); `new` and `plugin new`
+#: send a scaffold request to whoever owns the kind (§7). Nothing else belongs here — a verb
+#: that *does* something belongs to the component that does it, under that component's name.
+_ROUTERS: dict[str, Subcommand] = {
     verb.name: verb for verb in (_validate_verb, _new_verb, _plugin_verb)
 }
 
 
 def build_parser(verbs: Mapping[str, EntryPoint] | None = None) -> argparse.ArgumentParser:
-    """Build the phase-one parser: the verb, and everything after it, untouched.
+    """Build the phase-one parser: the component (or router), and the rest untouched.
 
-    ``verbs`` is injectable for tests; ``None`` reads the installed environment. Built per call,
-    never cached, so the verb set always reflects what is installed now.
+    ``verbs`` is the third-party set, injectable for tests; ``None`` reads the environment.
+    Threading it through rather than re-discovering inside :func:`_format_listing` matters:
+    the listing must describe the same environment the dispatcher will route in, or a caller
+    that injected a verb would be told it does not exist and then have it work anyway.
     """
-    discovered = discover_verbs() if verbs is None else verbs
     parser = argparse.ArgumentParser(
         prog="astro-mine",
         description=_DESCRIPTION,
-        epilog=_format_verbs(discovered),
+        epilog=_format_listing(verbs),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         add_help=True,
     )
     from astro_mine.cli import __version__
 
     parser.add_argument("--version", action="version", version=f"astro-mine {__version__}")
-    parser.add_argument("verb", nargs="?", help="the action to run; see the list below")
-    # REMAINDER, not a subparser tree: the tail belongs to the verb's own parser, which does not
-    # exist until the verb is loaded. It also means the umbrella never has to mirror, and drift
-    # from, a component's flags.
+    parser.add_argument("name", nargs="?", help="a component or a router; see the list below")
+    # REMAINDER, not a subparser tree: the tail belongs to the component's own parser, which
+    # does not exist until that component is imported. It also means this package never has
+    # to mirror — and drift from — a component's flags.
     parser.add_argument(
         "rest",
         nargs=argparse.REMAINDER,
-        help="arguments for the verb (`astro-mine <verb> --help` for its own help)",
+        help="arguments for the component or router "
+        "(`astro-mine <component> --help` for its own help)",
     )
     return parser
 
@@ -92,132 +100,117 @@ def main(
     *,
     verbs: Mapping[str, EntryPoint] | None = None,
 ) -> int:
-    """Run the umbrella. Returns the process exit status.
+    """Run the CLI. Returns the process exit status.
 
-    A bare ``astro-mine`` prints help and exits **0** — the user asked a dispatcher what it can
-    do, and the listing is a complete answer whether or not anything is installed.
+    A bare ``astro-mine`` prints help and exits **0** — the user asked a dispatcher what it
+    can do, and the listing is a complete answer.
 
-    A broken *environment* — two packages claiming one verb, or a provider that does not satisfy
-    the contract — is reported as a message and a non-zero status, never as a traceback
-    (RFC-0011 §4). Both are somebody else's packaging bug, and a stack trace through this
-    package's internals would point every reader at the wrong repo. A failure *inside* a verb is
-    not caught: that belongs to the component, and swallowing it would hide real errors.
+    A broken *environment* — a third-party package claiming a name the platform owns, or a
+    provider that does not satisfy the contract — is reported as a message and a non-zero
+    status, never as a traceback: both are somebody else's packaging bug, and a stack trace
+    through this package would point every reader at the wrong repo. A failure *inside* a
+    command is not caught; that belongs to the component, and swallowing it would hide real
+    errors.
     """
     try:
-        discovered = discover_verbs() if verbs is None else verbs
+        third_party = discover_verbs() if verbs is None else verbs
     except VerbCollisionError as exc:
         print(f"astro-mine: {exc}", file=sys.stderr)
         return _USAGE_ERROR
 
-    shadowed = sorted(set(discovered) & set(_BUILTIN_VERBS))
+    reserved = set(COMPONENTS) | set(_ROUTERS)
+    shadowed = sorted(set(third_party) & reserved)
     if shadowed:
-        names = ", ".join(f"{v!r} ({describe_provider(discovered[v])})" for v in shadowed)
+        names = ", ".join(f"{v!r} ({describe_provider(third_party[v])})" for v in shadowed)
         print(
-            f"astro-mine: {names} shadows a built-in verb the umbrella owns; uninstall the "
-            f"package or ask it to rename its `astro_mine.cli` entry point",
+            f"astro-mine: {names} shadows a name the platform owns; uninstall the package or "
+            f"ask it to rename its `astro_mine.cli` entry point",
             file=sys.stderr,
         )
         return _USAGE_ERROR
 
-    parser = build_parser(discovered)
+    parser = build_parser(third_party)
     args = parser.parse_args(argv)
 
-    if args.verb is None:
+    if args.name is None:
         parser.print_help()
         return 0
 
-    builtin = _BUILTIN_VERBS.get(args.verb)
-    if builtin is not None:
-        subcommand: Subcommand = builtin
-    else:
-        entry = discovered.get(args.verb)
-        if entry is None:
-            return _report_missing(parser, args.verb, discovered)
-        try:
-            subcommand = load_verb(entry)
-        except InvalidSubcommandError as exc:
-            print(f"astro-mine: {exc}", file=sys.stderr)
-            return _USAGE_ERROR
+    try:
+        subcommand = _resolve(args.name, third_party)
+    except InvalidSubcommandError as exc:
+        print(f"astro-mine: {exc}", file=sys.stderr)
+        return _USAGE_ERROR
+    if subcommand is None:
+        return _report_unknown(parser, args.name, third_party)
+
     sub = argparse.ArgumentParser(
-        prog=f"astro-mine {args.verb}",
+        prog=f"astro-mine {args.name}",
         description=subcommand.help,
     )
     subcommand.add_arguments(sub)
     status = subcommand.run(sub.parse_args(args.rest))
     # `None` is the near-universal Python convention for "finished, no error" (it is what
-    # sys.exit(None) means), and a component that ran successfully should not be punished with a
-    # crash for following it.
+    # sys.exit(None) means); a command that ran fine should not be punished for following it.
     return 0 if status is None else int(status)
 
 
-def _report_missing(
-    parser: argparse.ArgumentParser, verb: str, discovered: Mapping[str, EntryPoint]
+def _resolve(name: str, third_party: Mapping[str, EntryPoint]) -> Subcommand | None:
+    """Find who handles ``name`` — router, component, or third-party verb, in that order.
+
+    The order is also the precedence, and it is not negotiable: the two first-party sets are
+    checked before installed metadata so a third-party package cannot silently take over a
+    platform name. (It cannot reach here anyway — ``main`` rejects the collision first — but
+    resolution should not depend on that check having run.)
+    """
+    router = _ROUTERS.get(name)
+    if router is not None:
+        return router
+
+    component = COMPONENTS.get(name)
+    if component is not None:
+        module = importlib.import_module(component.module)
+        return module.command  # type: ignore[no-any-return]
+
+    entry = third_party.get(name)
+    return None if entry is None else load_verb(entry)
+
+
+def _report_unknown(
+    parser: argparse.ArgumentParser, name: str, third_party: Mapping[str, EntryPoint]
 ) -> int:
-    """A verb that did not resolve: name the fix if we know it, else fail like argparse.
+    """A name nobody claims. Suggest the nearest real one before giving the full list.
 
-    The split matters. A *known* platform verb whose component is absent is a missing install and
-    has an exact remedy, so printing "unknown command" would send the user looking for a typo they
-    did not make (RFC-0011 §4). A verb nobody advertises really is unknown.
+    The old umbrella had a static verb→distribution table here, so it could answer "that verb
+    needs a package you have not installed". In one distribution that case cannot arise —
+    every component is present — so an unrecognized name is a genuine mistake, and the useful
+    reply is the closest thing the user might have meant.
     """
-    hint = install_hint(verb)
-    if hint is None:
-        available = ", ".join(sorted(discovered)) or "none in this environment"
-        parser.error(f"unknown verb {verb!r} (available: {available})")  # exits _USAGE_ERROR
-    print(hint, file=sys.stderr)
-    return _USAGE_ERROR
+    import difflib
+
+    known = sorted({*COMPONENTS, *_ROUTERS, *third_party})
+    close = difflib.get_close_matches(name, known, n=1)
+    hint = f" (did you mean {close[0]!r}?)" if close else ""
+    parser.error(f"unknown component or verb {name!r}{hint}; available: {', '.join(known)}")
 
 
-def _format_verbs(discovered: Mapping[str, EntryPoint]) -> str:
-    """The verb listing shown under ``--help``, built without importing anything.
+def _format_listing(verbs: Mapping[str, EntryPoint] | None = None) -> str:
+    """The listing under ``--help``, built without importing a single component."""
+    width = max(len(n) for n in (*COMPONENTS, *_ROUTERS)) + 2
+    lines = ["Components — `astro-mine <component> <verb>`:"]
+    lines += [f"  {name:<{width}}{spec.help}" for name, spec in COMPONENTS.items()]
+    lines += ["", "Routers — these pick the owning component for you:"]
+    lines += [f"  {name:<{width}}{verb.help}" for name, verb in _ROUTERS.items()]
 
-    Uninstalled first-party verbs are listed too, and marked. On a bare install that turns
-    ``astro-mine --help`` into a map of the platform rather than an empty shell — which is the
-    discovery problem (**UC-A3**) this package exists to solve — as long as it never implies they
-    are runnable here.
-    """
-    installed = sorted({*discovered, *_BUILTIN_VERBS})
-    absent = sorted(v for v in FIRST_PARTY_VERBS if v not in discovered and v not in _BUILTIN_VERBS)
-    width = max((len(v) for v in (*installed, *absent)), default=0) + 2
-    lines: list[str] = []
-
+    if verbs is None:
+        try:
+            verbs = discover_verbs()
+        except VerbCollisionError:
+            verbs = {}
+    installed = {n: e for n, e in verbs.items() if n not in {*COMPONENTS, *_ROUTERS}}
     if installed:
-        lines.append("Verbs:")
-        lines += [
-            f"  {verb:<{width}}{_summarize(verb, discovered.get(verb))}" for verb in installed
-        ]
-    else:
-        lines.append("No verbs are registered in this environment yet.")
+        lines += ["", "Added by installed packages:"]
+        lines += [f"  {n:<{width}}provided by {describe_provider(e)}" for n, e in installed.items()]
 
-    if absent:
-        lines += [
-            "",
-            "Available from components that are not installed here:",
-            *(
-                f"  {verb:<{width}}{FIRST_PARTY_VERBS[verb].help} "
-                f"[{FIRST_PARTY_VERBS[verb].distribution}]"
-                for verb in absent
-            ),
-        ]
-
-    lines += [
-        "",
-        "Every component CLI also works directly (`astro-mine-bench score`, `fleet validate`).",
-        "`astro-mine <verb> --help` shows a verb's own options.",
-    ]
+    lines += ["", "`astro-mine <component> --help` lists that component's verbs."]
     return "\n".join(lines)
-
-
-def _summarize(verb: str, entry: EntryPoint | None) -> str:
-    """One line about an installed verb — from the manifest, or from its metadata.
-
-    Never from the provider: reading ``Subcommand.help`` here would import every installed
-    component to render a help screen, which is the exact cost this design refuses to pay.
-    """
-    builtin = _BUILTIN_VERBS.get(verb)
-    if builtin is not None:
-        return builtin.help
-    known = FIRST_PARTY_VERBS.get(verb)
-    if known is not None:
-        return known.help
-    assert entry is not None  # a non-built-in verb always came from an entry point
-    return f"provided by {describe_provider(entry)}"
