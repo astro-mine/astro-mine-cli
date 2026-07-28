@@ -22,7 +22,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from astro_mine.core.messages import (
     ContactInterval,
     ContactNode,

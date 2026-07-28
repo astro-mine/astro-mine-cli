@@ -19,7 +19,6 @@ import pytest
 
 from astro_mine.cli import main
 
-
 # --- learn: config assembly -----------------------------------------------------------------
 #
 # `_build_config` turns a Namespace into a TrainConfig. It is the whole of Learn's CLI logic:

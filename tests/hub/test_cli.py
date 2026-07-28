@@ -21,7 +21,6 @@ def main(argv=None):  # type: ignore[no-untyped-def]
 from pathlib import Path
 
 import pytest
-
 from astro_mine.hub.registry import Registry
 from astro_mine.hub.registry._oci import blob_path
 from astro_mine.hub.supply_chain import generate_keypair

@@ -7,7 +7,6 @@ and missing-command error paths.
 
 from __future__ import annotations
 
-
 # Migrated from astro-mine-platform, where these drove `astro-mine bench <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine bench <verb>`.
@@ -37,7 +36,6 @@ import json
 import pathlib
 
 import pytest
-
 from astro_mine.bench.baseline import (
     REFERENCE_EPISODE_RUNNER_ID,
     ScoringRefused,

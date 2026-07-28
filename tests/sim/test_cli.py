@@ -9,12 +9,11 @@ entry paths reach the same CLI; and ``run`` degrades with an actionable message 
 
 from __future__ import annotations
 
-from astro_mine.cli import sim as cli
-
 # Migrated from astro-mine-platform, where these drove `astro-mine sim <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine sim <verb>`.
 from astro_mine.cli import main as _astro_mine
+from astro_mine.cli import sim as cli
 
 
 def main(argv=None):  # type: ignore[no-untyped-def]
@@ -28,7 +27,6 @@ import typing
 from pathlib import Path
 
 import pytest
-
 
 DATA = Path(__file__).parent / "data"
 _SCENARIO = DATA / "scenario.json"  # a materialized Sim Scenario (name/seed/dt_s/horizon/agents)

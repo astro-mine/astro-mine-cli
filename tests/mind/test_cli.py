@@ -11,12 +11,11 @@ The properties the issue is about:
 
 from __future__ import annotations
 
-from astro_mine.cli import mind as cli
-
 # Migrated from astro-mine-platform, where these drove `astro-mine mind <verb>` directly.
 # The commands did not change -- only their address -- so the bodies are untouched and this
 # shim re-points `main([...])` at the one executable: `astro-mine mind <verb>`.
 from astro_mine.cli import main as _astro_mine
+from astro_mine.cli import mind as cli
 
 
 def main(argv=None):  # type: ignore[no-untyped-def]
@@ -28,7 +27,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 
 ROOT = Path(__file__).resolve().parents[2]
 _REFERENCE = "astro_mine.mind.reference"

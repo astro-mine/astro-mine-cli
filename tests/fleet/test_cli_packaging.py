@@ -31,7 +31,6 @@ from pathlib import Path
 import pytest
 
 
-
 def run(*argv: str) -> int:
     try:
         main(list(argv))

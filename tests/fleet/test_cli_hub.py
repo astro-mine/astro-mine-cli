@@ -27,7 +27,6 @@ from pathlib import Path
 
 import pytest
 
-
 from .conftest import VALID_SADF
 
 

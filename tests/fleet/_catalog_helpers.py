@@ -7,23 +7,14 @@ copies of the same assertions drifting apart.
 
 from __future__ import annotations
 
-
-
 from astro_mine.core.sadf import SadfDocument, load_sadf
-
 from astro_mine.core.sadf.enums import GeometryFormat, GeometryRole
-
 from astro_mine.core.sadf.model import GeometryRef
-
 from astro_mine.fleet._core import canonical_json
-
-
-
 from astro_mine.fleet.library import load_reference
-
 from astro_mine.fleet.packaging.hub import publish_asset
-
 from astro_mine.hub.supply_chain import generate_keypair
+
 
 def _novel_geometry_asset() -> SadfDocument:
     """A brand-new vehicle kind (not in the shipped library) carrying glTF + USD geometry refs.

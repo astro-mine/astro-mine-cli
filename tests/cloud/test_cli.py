@@ -17,7 +17,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from astro_mine.cloud.packaging import ImageRef
 from astro_mine.cloud.submission.jobspec import JobSpec
 from astro_mine.cloud.submission.sweepspec import SweepSpec

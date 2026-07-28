@@ -26,7 +26,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from astro_mine.core.sadf import SadfDocument
 from astro_mine.fleet.library import load_reference
 from astro_mine.fleet.packaging.hub import publish_asset

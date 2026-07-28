@@ -29,7 +29,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from astro_mine.core.schemas import CORE_JSON_SCHEMAS, core_schema
 
 ROOT = Path(__file__).resolve().parents[2]
