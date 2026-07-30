@@ -138,22 +138,43 @@ def test_studio_serve_says_where_the_rest_surface_lives(
 ) -> None:
     """The platform does not ship `astro_mine.studio.api`, so this reports rather than crashes.
 
-    Exit 0, not an error: the user asked a reasonable question and got a complete answer.
-
-    The answer has to be *reachable*, which is the half that was wrong: the message used to end
-    with `pip install astro-mine-studio[serve]`, a distribution the consolidation retired
+    The answer has to be *reachable*, which is one half of what was wrong: the message used to
+    end with `pip install astro-mine-studio[serve]`, a distribution the consolidation retired
     (astro-mine-cli#19). It now names `astro-mine-api` and the roadmap item that stands it up,
     and says outright that nothing installable exists yet — so the reader stops rather than
     fighting pip. The negative assertion is the one that matters: an install hint is only worth
     printing if it resolves.
     """
-    assert main(["studio", "serve"]) == 0
+    assert main(["studio", "serve"]) != 0
     err = capsys.readouterr().err
     assert "astro_mine.studio.api" in err
     assert "astro-mine-api" in err
     assert "RM-DIST-03" in err
     assert "astro-mine-studio[serve]" not in err
     assert "pip install" not in err
+
+
+def test_studio_serve_fails_rather_than_reporting_success(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The other half (astro-mine-cli#22): nothing was served, so this is not a success.
+
+    It returned 0 for a while, on the reasoning that the user had asked a fair question and got
+    a complete answer. But `serve` is imperative, not interrogative — the *outcome* is that no
+    server is running, and exit 0 asserts the opposite to everything that composes the command:
+
+        astro-mine studio serve && open http://localhost:8000     # opened a dead port
+
+    A separate test from the one above on purpose. The message and the status are independent
+    regressions with independent causes, and a single test asserting both would let a future
+    reader assume fixing one covered the other — which is exactly how these two drifted apart.
+
+    **1, not 2.** 2 is `_dispatch._USAGE_ERROR`, "I typed this wrong". Nothing here is
+    mistyped; the distribution is incomplete. Pinned exactly, because "non-zero" is not the
+    contract — a script that branches on the code needs the code to be stable.
+    """
+    assert main(["studio", "serve"]) == 1
+    assert capsys.readouterr().err.strip(), "a failing command must still say why"
 
 
 # --- core: the validate flags the migrated suite does not exercise --------------------------
