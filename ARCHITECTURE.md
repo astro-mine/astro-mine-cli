@@ -42,7 +42,7 @@ strings, no imports — and the dispatcher imports exactly one module, the one t
 That is what the two-phase parse is for. Phase one parses only *which* component; everything
 after it is `argparse.REMAINDER`. Phase two imports that component's module and lets it parse
 its own tail. A single-phase parser would have to call every component's `add_arguments` to
-build the tree, importing all thirteen to render a help screen.
+build the tree, importing all fourteen to render a help screen.
 
 The cost is that top-level `--help` cannot show a component's own verbs. That is the trade, and
 `astro-mine <component> --help` is where the real help lives.
@@ -51,7 +51,7 @@ The cost is that top-level `--help` cannot show a component's own verbs. That is
 
 ```
 src/astro_mine/cli/
-├── _dispatch.py      the root parser: 13 components + 3 routers
+├── _dispatch.py      the root parser: 14 components + 3 routers
 ├── _registry.py      the static tables — plain strings, imports nothing
 ├── _protocol.py      the four-member contract a third-party verb satisfies
 ├── _discovery.py     third-party verb discovery (entry points)
