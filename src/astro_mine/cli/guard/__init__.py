@@ -387,7 +387,7 @@ class _GuardValidator:
 
     Guard owns the SafetySpec format, so it owns the checker. The umbrella routes; it holds no
     schema knowledge of its own and reimplements nothing here — ``validate`` calls the same
-    ``_cmd_validate`` that ``astro-mine-guard validate`` dispatches to, so the two surfaces cannot
+    ``_cmd_validate`` that ``astro-mine guard validate`` dispatches to, so the two surfaces cannot
     disagree about what is valid.
     """
 
@@ -414,7 +414,7 @@ class _GuardValidator:
         return None
 
     def validate(self, paths: Sequence[str], *, as_json: bool) -> int:
-        """Run the same checker `astro-mine-guard validate` runs — not a second implementation."""
+        """Run the same checker `astro-mine guard validate` runs — not a second implementation."""
         del as_json  # Guard's checker has no JSON mode; its text report is the output
         return int(_cmd_validate(argparse.Namespace(spec=list(paths))))
 

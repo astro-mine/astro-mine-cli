@@ -12,9 +12,9 @@ valid as the spec and the plugin contract move. Mixing the two would bury a hund
 document in a file whose job is routing.
 
 **What the scaffolds emit must survive Mind's own checker**, which is a higher bar than schema
-validity: ``astro-mine-mind validate`` also asks the registry whether every plugin a stack binds is
+validity: ``astro-mine mind validate`` also asks the registry whether every plugin a stack binds is
 discoverable (`cli.py`). A stack naming a plugin nobody registers fails — so the scaffold binds
-Mind's own reference tiers, which a bare `pip install astro-mine-mind` already provides. A scaffold
+Mind's own reference tiers, which a bare `pip install astro-mine-cli` already provides. A scaffold
 whose output only validates once the user has installed something else would be a worked example of
 the error it is meant to prevent.
 
@@ -36,7 +36,7 @@ __all__ = ["stack_scaffold", "tier_scaffold"]
 
 _USAGE_ERROR = 2
 
-#: The reference tiers a bare `pip install astro-mine-mind` registers under
+#: The reference tiers a bare platform install registers under
 #: ``astro_mine.mind.tier_plugins``. The scaffold binds these so its output passes the registry
 #: check on the first run; swapping one for a real backend is the spec edit Mind exists to make
 #: cheap (`mind.md §3`).
@@ -55,10 +55,10 @@ def _stack_spec(*, stack_id: str, name: str, scenario_ref: str | None) -> str:
 # Stack spec v0.1 — scaffolded by `astro-mine new stack`.
 #
 # Mind's thesis is that swapping an engine is a spec edit, not a code change. Everything below is
-# a binding you can repoint: `astro-mine-mind compose <this file>` reports which plugin bound to
+# a binding you can repoint: `astro-mine mind compose <this file>` reports which plugin bound to
 # which tier, from which entry-point group, at which version.
 #
-# Validate: `astro-mine validate <path>` (or `astro-mine-mind validate <path>`), which checks the
+# Validate: `astro-mine validate <path>` (or `astro-mine mind validate <path>`), which checks the
 # schema *and* that every plugin named here is discoverable.
 stack_spec_version: "0.1"
 stack_spec:
@@ -66,7 +66,7 @@ stack_spec:
   name: {name}{scenario}
   # Three tiers, mission -> per-agent TAMP -> controller. The bindings are Mind's reference
   # plugins, which a bare install already registers, so this file validates as written. List
-  # alternatives with `astro-mine-mind stacks`.
+  # alternatives with `astro-mine mind stacks`.
   tiers:
     - role: mission
       plugin: {_REFERENCE_TIERS["mission"]}
@@ -83,7 +83,8 @@ stack_spec:
       plugin: {_REFERENCE_TIERS["control"]}
   # The shield is mandatory and is the stack's single output path: every action the executive
   # emits crosses it before it reaches the Environment. The reference one passes actions through;
-  # co-install astro-mine-guard and repoint this to `guard.shield` for the real safety core.
+  # repoint this to `guard.shield` for the real safety core -- Guard ships in the same wheel,
+  # so there is nothing to co-install.
   shield:
     plugin: {_REFERENCE_TIERS["shield"]}
 """
@@ -140,13 +141,12 @@ name = "{distribution}"
 version = "0.1.0"
 description = "A {tier} tier contributed to Astro-Mine-Mind."
 requires-python = ">=3.12"
-# astro-mine-mind for the TierPlugin container, astro-mine-core for the manifest and messages.
+# `astro-mine-platform` ships both `astro_mine.mind` (the TierPlugin container) and
+# `astro_mine.core` (the manifest and messages) -- there is no per-component distribution to
+# depend on, so this is what an installable package names.
 # Note what is NOT here: astro-mine-cli. The umbrella loads this package; it is not a dependency
 # of it.
-dependencies = [
-  "astro-mine-mind",
-  "astro-mine-core",
-]
+dependencies = ["astro-mine-platform"]
 
 [project.entry-points."astro_mine.mind.tier_plugins"]
 "{plugin}" = "{module}:{_symbol(plugin)}_plugin"
@@ -256,7 +256,7 @@ class _TierScaffold:
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.description = (
             "Scaffold a package that contributes a tier to Mind's autonomy stack. The result "
-            "installs, registers, and is discovered by `astro-mine-mind compose`."
+            "installs, registers, and is discovered by `astro-mine mind compose`."
         )
         parser.add_argument(
             "--tier",
@@ -307,7 +307,7 @@ class _TierScaffold:
             print(
                 f"\nInstall it and Mind finds it:\n"
                 f"  pip install -e {target}\n"
-                f"  astro-mine-mind compose <a stack spec binding {plugin}>"
+                f"  astro-mine mind compose <a stack spec binding {plugin}>"
             )
         return status
 

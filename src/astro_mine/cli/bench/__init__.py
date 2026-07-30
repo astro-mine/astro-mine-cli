@@ -10,7 +10,7 @@ capability-aware baseline reaches this command without Bench ever reading a SADF
 ``score --runner fixture|sim`` selects the runner (default ``fixture`` — the dependency-clean
 deterministic trace fixture, *not* Sim). Runners are discovered by name through the
 ``astro_mine.bench.runners`` entry-point group (conventions.md §7); ``sim`` resolves an injected
-Sim runner from ``astro-mine sim[bench]``. The CLI never imports Sim, keeping the base package
+Sim runner from ``astro-mine-platform[sim-bench]``. The CLI never imports Sim, keeping the base
 dep-clean, and the chosen runner is recorded in the scorecard and folded into its content hash so a
 fixture score and a Sim score are distinguishable by provenance, not just by value.
 
@@ -113,7 +113,7 @@ def _score(args: argparse.Namespace) -> int:
 
     ``--runner`` selects the runner by name (default ``fixture``, the always-available
     dependency-clean built-in). Bench discovers the runner, it never imports one — a third party
-    like ``sim`` resolves an injected runner from ``astro-mine sim[bench]`` through the
+    like ``sim`` resolves an injected runner from ``astro-mine-platform[sim-bench]`` through the
     ``astro_mine.bench.runners`` entry-point group, and fails with an install hint (not a
     traceback) when it is absent (CX-LOCAL; conventions.md §1.1, §7).
     """
@@ -438,7 +438,8 @@ def add_score_arguments(parser: argparse.ArgumentParser) -> None:
         metavar="NAME",
         help=(
             "runner to score with (default: fixture). 'fixture' is a deterministic trace fixture, "
-            "not a physics engine; 'sim' runs the real Sim engine and needs astro-mine sim[bench] "
+            "not a physics engine; 'sim' runs the real Sim engine and needs "
+            "astro-mine-platform[sim-bench] "
             "plus fetched content. The runner is recorded in the scorecard and its hash."
         ),
     )

@@ -8,7 +8,7 @@ SafetySpec is Guard's.
 (``reference/safety_specs/anchor.safety.yaml``) is 188 lines and exercises every constraint kind
 and all three keep-out geometries — the right thing to *read*, and the wrong thing to be handed as
 a starting point, because a user editing 188 lines of somebody else's contract is not authoring
-theirs. `astro-mine-guard validate anchor` is one command away, and this template points at it.
+theirs. `astro-mine guard validate anchor` is one command away, and this template points at it.
 
 So the scaffold emits the **smallest contract that is complete**: one hard constraint, the signal
 it reads, and the directive allowlist. Three things it will not leave to the reader:
@@ -53,12 +53,12 @@ def _safety_spec(*, spec_id: str, name: str, scenario_ref: str | None) -> str:
 #
 # A hard-constraint safety contract: authored and reviewed once, then reused unchanged across
 # design-time training, sim validation, and operations. It is content-addressed, so the hash below
-# a `astro-mine-guard validate` run is the contract's immutable identity.
+# a `astro-mine guard validate` run is the contract's immutable identity.
 #
-#   astro-mine validate <path>          # or `astro-mine-guard validate <path>`
-#   astro-mine-guard compile <path>     # lower it to the IR the trusted core enforces
-#   astro-mine-guard falsify <path>     # search for a counterexample
-#   astro-mine-guard validate anchor    # the shipped 188-line reference contract, worked
+#   astro-mine validate <path>          # or `astro-mine guard validate <path>`
+#   astro-mine guard compile <path>     # lower it to the IR the trusted core enforces
+#   astro-mine guard falsify <path>     # search for a counterexample
+#   astro-mine guard validate anchor    # the shipped 188-line reference contract, worked
 safety_version: "0.1"
 safety:
   id: {spec_id}
@@ -93,7 +93,7 @@ safety:
   # Other kinds: energy_floor, thermal_ceiling, thermal_floor, torque_ceiling, kinematic_limit,
   # temporal (bounded STL/MTL), and keep_out. `keep_out` is left out of this scaffold on purpose:
   # its geometry frame must match `safe_pose.frame`, a cross-field rule worth meeting deliberately
-  # rather than inheriting. `astro-mine-guard validate anchor` shows all of them in place.
+  # rather than inheriting. `astro-mine guard validate anchor` shows all of them in place.
 
   # The MODE/TASK directives this contract certifies, by enumeration.
   #

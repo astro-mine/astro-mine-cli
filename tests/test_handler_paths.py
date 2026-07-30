@@ -139,10 +139,21 @@ def test_studio_serve_says_where_the_rest_surface_lives(
     """The platform does not ship `astro_mine.studio.api`, so this reports rather than crashes.
 
     Exit 0, not an error: the user asked a reasonable question and got a complete answer.
+
+    The answer has to be *reachable*, which is the half that was wrong: the message used to end
+    with `pip install astro-mine-studio[serve]`, a distribution the consolidation retired
+    (astro-mine-cli#19). It now names `astro-mine-api` and the roadmap item that stands it up,
+    and says outright that nothing installable exists yet — so the reader stops rather than
+    fighting pip. The negative assertion is the one that matters: an install hint is only worth
+    printing if it resolves.
     """
     assert main(["studio", "serve"]) == 0
     err = capsys.readouterr().err
-    assert "astro-mine-studio[serve]" in err
+    assert "astro_mine.studio.api" in err
+    assert "astro-mine-api" in err
+    assert "RM-DIST-03" in err
+    assert "astro-mine-studio[serve]" not in err
+    assert "pip install" not in err
 
 
 # --- core: the validate flags the migrated suite does not exercise --------------------------

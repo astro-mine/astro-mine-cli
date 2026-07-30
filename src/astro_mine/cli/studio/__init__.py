@@ -2,8 +2,11 @@
 
 **This command cannot run in this distribution, and says so.** `serve` composes the FastAPI
 app from :func:`astro_mine.studio.api.create_app`, and the Studio REST surface is deliberately
-not part of `astro-mine-platform` (`docs/CONSOLIDATION_PLAN.md` §"Not migrated"). So the verb
-exists, its flags are the real ones, and running it reports exactly what to install.
+not part of `astro-mine-platform` (the platform's `docs/CONSOLIDATION_PLAN.md` §"Not migrated";
+`architecture/api.md`). So the verb exists, its flags are the real ones, and running it reports
+where the surface lives. It does **not** report what to install, because as of `astro-mine-api`
+not being stood up (roadmap `RM-DIST-03`) there is nothing installable to name — and naming a
+distribution that does not resolve is the defect this message was fixed for (astro-mine-cli#19).
 
 The group is kept rather than dropped because the error message *is* the useful behaviour:
 removing `studio` would make `astro-mine --help` claim the platform has less than it does, and
@@ -33,10 +36,23 @@ CACHE_DIR_ENV = "ASTRO_MINE_STUDIO_CACHE"
 DEFAULT_TRUSTED_KEY_NAMES = ("cosign.pub", "anchor-dev.pub.pem")
 DEFAULT_SIGNING_KEY_NAMES = ("cosign.key", "anchor-dev.key.pem")
 
+#: What `serve` prints instead of serving.
+#
+# The second line used to read `pip install astro-mine-studio[serve]` -- a distribution the
+# consolidation retired, so the message named a fix that could not work (astro-mine-cli#19). An
+# install hint that resolves to nothing is worse than no hint: it sends the reader to pip, which
+# reports "no matching distribution" and leaves them believing their environment is broken.
+#
+# The honest answer names the distribution that *will* own the surface and admits it does not
+# exist yet, so a reader stops looking rather than searching for a package to install. When
+# `astro-mine-api` ships (roadmap RM-DIST-03), this becomes `pip install astro-mine-api` and the
+# second paragraph goes away.
 _UNAVAILABLE = (
     "astro-mine studio serve needs the Studio REST surface (astro_mine.studio.api), which is "
     "not included in astro-mine-platform.\n"
-    "  pip install astro-mine-studio[serve]"
+    "  The REST tier ships in astro-mine-api (docs: architecture/api.md), which is not stood up "
+    "yet — roadmap RM-DIST-03.\n"
+    "  No released distribution provides it today, so there is nothing to install."
 )
 
 

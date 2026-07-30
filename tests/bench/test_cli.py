@@ -116,7 +116,7 @@ def test_score_runner_sim_without_sim_is_a_clean_error() -> None:
     code, out, err = _run("score", "--runner", "sim")
     assert code == 2
     assert out == ""
-    assert "astro-mine sim[bench]" in err
+    assert "astro-mine-platform[sim-bench]" in err
     assert "Traceback" not in err
 
 

@@ -208,7 +208,7 @@ class _WorldsValidator:
         return None
 
     def validate(self, paths: Sequence[str], *, as_json: bool) -> int:
-        """Run the same checker `astro-mine-worlds validate` runs — not a second implementation."""
+        """Run the same checker `astro-mine worlds validate` runs — not a second implementation."""
         return int(_cmd_validate(argparse.Namespace(path=list(paths), json=as_json)))
 
 

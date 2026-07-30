@@ -63,7 +63,10 @@ description = "A MARL algorithm contributed to Astro-Mine-Learn."
 requires-python = ">=3.12"
 # Note what is NOT here: astro-mine-cli. The umbrella loads this package; it is not a dependency
 # of it.
-dependencies = ["astro-mine-learn"]
+#
+# `astro-mine-platform` is the distribution that ships `astro_mine.learn` -- there is no
+# per-component distribution to depend on, so this is what an installable package names.
+dependencies = ["astro-mine-platform"]
 
 [project.entry-points."astro_mine.learn.algorithms"]
 {entry} = "{module}:build"
@@ -84,7 +87,7 @@ this algorithm by ``spec.capability_tag`` — read off the loaded object — and
 point is called. Change the tag below and the id you select in a ``TrainConfig`` changes with it;
 change the entry-point name and nothing changes at all.
 
-    astro-mine-learn train --algorithm {tag} ...
+    astro-mine learn train --algorithm {tag} ...
 
 The contract is a zero-argument callable returning an ``Algorithm``: a ``spec`` property and a
 ``make_trainer(env, config, ...)`` that builds a ``Trainer``. This one subclasses a shipped baseline
@@ -178,7 +181,7 @@ class _AlgorithmScaffold:
         if status == 0:
             print(
                 f"\nInstall it and Learn finds it:\n  pip install -e {target}\n  # then select it:"
-                f"\n  astro-mine-learn train --algorithm {args.tag} ..."
+                f"\n  astro-mine learn train --algorithm {args.tag} ..."
             )
         return status
 
@@ -205,7 +208,10 @@ description = "A training curriculum contributed to Astro-Mine-Learn."
 requires-python = ">=3.12"
 # Note what is NOT here: astro-mine-cli. The umbrella loads this package; it is not a dependency
 # of it.
-dependencies = ["astro-mine-learn"]
+#
+# `astro-mine-platform` is the distribution that ships `astro_mine.learn` -- there is no
+# per-component distribution to depend on, so this is what an installable package names.
+dependencies = ["astro-mine-platform"]
 
 [project.entry-points."astro_mine.learn.curricula"]
 {entry} = "{module}:build"
@@ -311,7 +317,7 @@ class _CurriculumScaffold:
         if status == 0:
             print(
                 f"\nInstall it and Learn finds it:\n  pip install -e {target}\n  # then select it:"
-                f"\n  astro-mine-learn train --curriculum {args.curriculum} ..."
+                f"\n  astro-mine learn train --curriculum {args.curriculum} ..."
             )
         return status
 
