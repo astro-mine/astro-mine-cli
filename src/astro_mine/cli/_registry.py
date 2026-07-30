@@ -42,11 +42,16 @@ class Component(NamedTuple):
     help: str
 
 
-#: The 13 components that ship commands, in the order a user meets them: author content,
-#: run it, score it, train, publish, then the surfaces that orchestrate. `spice`, `seal`,
-#: `surrogate` and `allocate` expose no commands and get no group; they gain one the day
-#: they do. (`allocate` still owns the `solver` plugin scaffold — that reaches users through
+#: The 14 components that ship commands, in the order a user meets them: author content,
+#: run it, score it, train, publish, then the surfaces that orchestrate. `spice`, `surrogate`
+#: and `allocate` expose no commands and get no group; they gain one the day they do.
+#: (`allocate` still owns the `solver` plugin scaffold — that reaches users through
 #: `astro-mine plugin new solver`, which is routed by kind, not by component.)
+#:
+#: `seal` was in that list until astro-mine-cli#17: the one component whose whole job is to be
+#: run from a shell was the one with no shell surface, so verifying a file you were handed meant
+#: writing Python. It is the first group added after the move, which is why it is absent from
+#: the parser-parity fixture — see `tests/test_parser_parity.py`.
 COMPONENTS: MappingProxyType[str, Component] = MappingProxyType(
     {
         "core": Component("astro_mine.cli.core", "validate Core-authored formats; list them"),
@@ -60,6 +65,7 @@ COMPONENTS: MappingProxyType[str, Component] = MappingProxyType(
         "mind": Component("astro_mine.cli.mind", "validate and compose autonomy stacks"),
         "guard": Component("astro_mine.cli.guard", "author, compile and falsify SafetySpecs"),
         "hub": Component("astro_mine.cli.hub", "publish, discover and verify artifacts"),
+        "seal": Component("astro_mine.cli.seal", "sign, verify and describe artifacts"),
         "cloud": Component("astro_mine.cli.cloud", "compile and submit cluster jobs"),
         "studio": Component("astro_mine.cli.studio", "the design studio"),
     }

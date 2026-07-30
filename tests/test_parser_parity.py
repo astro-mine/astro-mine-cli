@@ -38,6 +38,13 @@ types, and every string that tells them what to type, is compared exactly.
 Regenerating the fixture to make this pass is not a fix -- the fixture is the old behaviour,
 and the old behaviour is the requirement. If a verb genuinely must change, that is a separate
 change with its own justification, and the fixture moves in *that* commit.
+
+**Components added after the move are excluded, by name.** A fixture recording what the platform's
+binaries declared cannot record a group that never was one, and back-filling it would turn the
+contract into a mirror of the current code -- which is the failure mode this whole file exists to
+prevent. :data:`POST_MOVE` names them, and
+:func:`test_the_fixture_covers_every_component_and_all_fifty_verbs` asserts the exclusion is
+exactly that set, so a *ported* component silently vanishing from the fixture still fails.
 """
 
 from __future__ import annotations
@@ -54,6 +61,18 @@ import pytest
 from astro_mine.cli._registry import COMPONENTS
 
 FIXTURE = Path(__file__).parent / "fixtures" / "parser-snapshot.json"
+
+#: Component groups that did not exist as a platform binary, so the fixture cannot describe them.
+#: `seal` is the first (astro-mine-cli#17): the platform's signing component shipped no CLI at all,
+#: which is why the CLI reference had to list it under "commands that do not exist".
+#:
+#: Adding a name here is how a genuinely new group is admitted. It is NOT how a ported command
+#: escapes the contract -- a verb that changes is a separate change with its own justification, and
+#: the fixture moves in that commit.
+POST_MOVE: frozenset[str] = frozenset({"seal"})
+
+#: The components the fixture is a contract for: everything that was a binary before the move.
+PORTED: tuple[str, ...] = tuple(sorted(set(COMPONENTS) - POST_MOVE))
 
 #: `astro-mine-sim[bench]` -> `astro-mine-platform[sim-bench]`. A retired distribution *with an
 #: extra* is not a binary, and must not be rewritten as one: consolidation moved the extras into
@@ -134,13 +153,13 @@ def _built(component: str) -> dict[str, Any]:
     return _describe(parser)
 
 
-@pytest.mark.parametrize("component", sorted(COMPONENTS))
+@pytest.mark.parametrize("component", PORTED)
 def test_component_exposes_the_same_verbs(component: str, snapshot: dict[str, Any]) -> None:
     """No verb was dropped in the move, and none was invented."""
     assert sorted(_built(component)["verbs"]) == sorted(snapshot[component]["verbs"]), component
 
 
-@pytest.mark.parametrize("component", sorted(COMPONENTS))
+@pytest.mark.parametrize("component", PORTED)
 def test_component_level_arguments_match(component: str, snapshot: dict[str, Any]) -> None:
     """Flags that hang off the component itself, e.g. `astro-mine core --json validate …`."""
     assert _built(component)["actions"] == snapshot[component]["actions"], component
@@ -148,7 +167,7 @@ def test_component_level_arguments_match(component: str, snapshot: dict[str, Any
 
 def _verb_ids() -> list[tuple[str, str]]:
     fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
-    return [(c, v) for c in sorted(COMPONENTS) for v in sorted(fixture[c]["verbs"])]
+    return [(c, v) for c in PORTED for v in sorted(fixture[c]["verbs"])]
 
 
 @pytest.mark.parametrize(("component", "verb"), _verb_ids(), ids=lambda p: p)
@@ -166,7 +185,15 @@ def test_every_verb_argument_matches(component: str, verb: str, snapshot: dict[s
 
 
 def test_the_fixture_covers_every_component_and_all_fifty_verbs(snapshot: dict[str, Any]) -> None:
-    """Guards the guard: a fixture that silently lost entries would make this suite vacuous."""
-    assert sorted(snapshot) == sorted(COMPONENTS)
+    """Guards the guard: a fixture that silently lost entries would make this suite vacuous.
+
+    The exclusion is asserted as an equality, not a subset: a ported component dropping out of the
+    fixture and a new group being added are both "the fixture no longer covers everything", and
+    only one of them is allowed. Naming the difference exactly is what tells them apart.
+    """
+    assert sorted(snapshot) == list(PORTED)
+    assert set(COMPONENTS) - set(snapshot) == POST_MOVE, (
+        "a component is missing from the fixture without being declared post-move"
+    )
     total = sum(len(c["verbs"]) or 1 for c in snapshot.values())
     assert total == 50, f"expected 50 verbs in the contract, found {total}"

@@ -13,7 +13,7 @@ level, and one (`core`) not reachable at all — so `astro-mine core validate`, 
 
 **Why parsing still happens in two phases.** Filling in a component's arguments means
 importing that component's CLI module, which imports the platform package behind it. A
-single-phase parser would import all thirteen just to render ``--help``. So phase one parses
+single-phase parser would import all fourteen just to render ``--help``. So phase one parses
 only *which* component (everything after it is :data:`argparse.REMAINDER`), and phase two
 imports that one module and lets it parse its own tail. The user pays for the command they
 ran and nothing else — the one property of RFC-0011 §1a worth carrying past consolidation.
