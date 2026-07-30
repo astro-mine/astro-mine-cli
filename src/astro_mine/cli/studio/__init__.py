@@ -11,7 +11,8 @@ distribution that does not resolve is the defect this message was fixed for (ast
 The group is kept rather than dropped because the error message *is* the useful behaviour:
 removing `studio` would make `astro-mine --help` claim the platform has less than it does, and
 a user following a tutorial would get "unknown component" instead of the one line that tells
-them where the REST surface lives.
+them where the REST surface lives. Useful behaviour, but not *success* — `serve` exits non-zero,
+because nothing was served (astro-mine-cli#22; see :data:`_UNAVAILABLE_STATUS`).
 
 Everything else that used to live here -- `build_serve_app`, `_wire_hub_seams`, `_mount_ui`,
 `render_banner` -- came across in the port and was 113 statements of app composition for an
@@ -56,10 +57,30 @@ _UNAVAILABLE = (
 )
 
 
+#: `serve` could not serve, so it does not report success (astro-mine-cli#22).
+#
+# This used to return 0, on the reasoning that the user "asked a fair question and got a complete
+# answer". They did not ask a question -- `serve` is imperative. Answering an imperative with an
+# explanation is the right *behaviour*; reporting it as success is a claim about the *outcome*, and
+# no server is running. `astro-mine studio serve && open http://localhost:8000` opened a dead port,
+# and a CI step that backgrounded it passed.
+#
+# **1, not 2.** The 2 in `_dispatch._USAGE_ERROR` means "I typed this wrong", kept deliberately
+# distinct from the 1-and-up range a command uses for its own failures. Nothing about this
+# invocation is malformed -- every flag is real and correctly spelled -- so 2 would point the reader
+# at their command line when the problem is their installation. 1 says the run failed, which is what
+# happened, and matches `astro-mine hub`'s refusal path.
+#
+# The message being *good* is what made the old status dangerous rather than obvious: the command
+# looked like it had worked and helpfully explained something. A human reading a terminal was fine;
+# a Makefile, a compose healthcheck or a tutorial's copy-paste block was not.
+_UNAVAILABLE_STATUS = 1
+
+
 def _cmd_serve(args: argparse.Namespace) -> int:
-    """Report where the REST surface lives. Exit 0: the user asked a fair question."""
+    """Report where the REST surface lives, and fail: nothing was served."""
     print(_UNAVAILABLE, file=sys.stderr)
-    return 0
+    return _UNAVAILABLE_STATUS
 
 
 def _add_arguments(parser: argparse.ArgumentParser) -> None:
