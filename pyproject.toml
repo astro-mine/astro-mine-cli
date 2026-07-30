@@ -68,6 +68,19 @@ dev = [
   "ruff>=0.6",
   "mypy>=1.11",
   "pre-commit>=3.7",
+  # A TEST dependency, not a runtime one, and the distinction is the whole reason it is here
+  # rather than in `[project].dependencies` (which is enforced at exactly one entry by
+  # tests/test_packaging.py::test_depends_only_on_the_platform).
+  #
+  # `astro-mine bench zoo-sync` / `zoo-search` drive the SQL scenario catalog, which the platform
+  # puts behind its `bench-leaderboard` extra. Without it three tests failed on a bare
+  # ModuleNotFoundError and the 15 statements they cover -- the whole `zoo-sync`/`zoo-search`
+  # handler pair -- were the entire gap between this repo's coverage and its own 95% gate.
+  #
+  # Bare `sqlalchemy` rather than `astro-mine-platform[bench-leaderboard]`: the tests use SQLite
+  # DSNs, so psycopg, pyjwt and httpx would install a Postgres stack nothing here connects to.
+  # Version tracks the platform's own constraint so the two cannot resolve differently.
+  "sqlalchemy>=2.0",
 ]
 
 [tool.hatch.version]

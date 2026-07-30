@@ -60,7 +60,10 @@ description = "An illumination backend contributed to Astro-Mine-Worlds."
 requires-python = ">=3.12"
 # Note what is NOT here: astro-mine-cli. The umbrella loads this package; it is not a dependency
 # of it.
-dependencies = ["astro-mine-worlds"]
+#
+# `astro-mine-platform` is the distribution that ships `astro_mine.worlds` -- there is no
+# per-component distribution to depend on, so this is what an installable package names.
+dependencies = ["astro-mine-platform"]
 
 [project.entry-points."astro_mine.field_models"]
 {backend} = "{module}:build"

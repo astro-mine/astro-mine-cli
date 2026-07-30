@@ -17,13 +17,23 @@ does it.
 `__doc__.splitlines()[0]` of a module whose docstring this change rewrites). Everything a user
 types, and every string that tells them what to type, is compared exactly.
 
-**One normalization, applied to both sides.** 109 help strings named a binary this change
-deletes -- *"Mint one with `astro-mine-hub keygen`"*. Leaving them would ship instructions to
-run a command that no longer exists, so they were re-addressed to `astro-mine hub keygen`.
-:func:`_readdress` applies that same rewrite to the fixture before comparing, so an expected
-re-addressing passes and a *substantive* help-text edit still fails. It rewrites only the
-`astro-mine-<component>` form; the distribution names `astro-mine-platform` and
-`astro-mine-cli` are untouched, as are GitHub URLs.
+**Two normalizations, applied to both sides.**
+
+1. *Binaries.* 109 help strings named a binary this change deletes -- *"Mint one with
+   `astro-mine-hub keygen`"*. Leaving them would ship instructions to run a command that no
+   longer exists, so they were re-addressed to `astro-mine hub keygen`. :func:`_readdress`
+   applies that same rewrite to the fixture before comparing, so an expected re-addressing
+   passes and a *substantive* help-text edit still fails. It rewrites only the
+   `astro-mine-<component>` form; the distribution names `astro-mine-platform` and
+   `astro-mine-cli` are untouched, as are GitHub URLs.
+
+2. *Extras.* Normalization 1 was applied too widely once: `astro-mine-sim[bench]` is a
+   **distribution plus extra**, not a binary, so re-addressing it produced `astro-mine
+   sim[bench]` -- a shell command offered as a `pip install` target, which resolves to nothing
+   (astro-mine-cli#19). Consolidation folded the per-component extras into the platform's
+   `<component>-<extra>` namespace, so the honest target is `astro-mine-platform[sim-bench]`.
+   :func:`_readdress` maps the fixture's `astro-mine-<component>[<extra>]` onto that form, and
+   runs **before** the binary rewrite so the latter never sees an extra again.
 
 Regenerating the fixture to make this pass is not a fix -- the fixture is the old behaviour,
 and the old behaviour is the requirement. If a verb genuinely must change, that is a separate
@@ -45,6 +55,13 @@ from astro_mine.cli._registry import COMPONENTS
 
 FIXTURE = Path(__file__).parent / "fixtures" / "parser-snapshot.json"
 
+#: `astro-mine-sim[bench]` -> `astro-mine-platform[sim-bench]`. A retired distribution *with an
+#: extra* is not a binary, and must not be rewritten as one: consolidation moved the extras into
+#: the platform under `<component>-<extra>`, which is the only form that installs.
+_OLD_EXTRA = re.compile(
+    r"(?<![/\w-])astro-mine-(" + "|".join(sorted(COMPONENTS)) + r")\[([a-z0-9-]+)\]"
+)
+
 #: `astro-mine-hub keygen` -> `astro-mine hub keygen`, and nothing else. Not preceded by `/`
 #: so GitHub URLs survive; the alternation lists components, so `astro-mine-platform` and
 #: `astro-mine-cli` -- which are distributions, not commands -- survive too.
@@ -54,8 +71,15 @@ _OLD_BINARY = re.compile(
 
 
 def _readdress(value: Any) -> Any:
-    """Rewrite a removed binary name to its `astro-mine <component>` address."""
-    return _OLD_BINARY.sub(r"astro-mine \1", value) if isinstance(value, str) else value
+    """Rewrite the fixture's retired names to the ones this distribution actually offers.
+
+    Extras first: once `astro-mine-sim[bench]` has become `astro-mine-platform[sim-bench]`,
+    the binary pattern can no longer match it, so the order is what keeps the two rules from
+    fighting over the same string.
+    """
+    if not isinstance(value, str):
+        return value
+    return _OLD_BINARY.sub(r"astro-mine \1", _OLD_EXTRA.sub(r"astro-mine-platform[\1-\2]", value))
 
 
 @pytest.fixture(scope="session")

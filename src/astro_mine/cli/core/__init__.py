@@ -260,7 +260,7 @@ class _CoreValidator:
             return None
 
     def validate(self, paths: Sequence[str], *, as_json: bool) -> int:
-        """Run the same checker `astro-mine-core validate` runs — not a second implementation."""
+        """Run the same checker `astro-mine core validate` runs — not a second implementation."""
         return int(_cmd_validate(argparse.Namespace(file=list(paths), kind=None, json=as_json)))
 
 

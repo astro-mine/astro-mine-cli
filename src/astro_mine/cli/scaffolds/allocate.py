@@ -62,7 +62,10 @@ description = "An allocation solver backend contributed to Astro-Mine-Allocate."
 requires-python = ">=3.12"
 # Add your own solver dependency here (OR-Tools, a MIP library, your own engine). Note what is NOT
 # here: astro-mine-cli. The umbrella loads this package; it is not a dependency of it.
-dependencies = ["astro-mine-allocate"]
+#
+# `astro-mine-platform` is the distribution that ships `astro_mine.allocate` -- there is no
+# per-component distribution to depend on, so this is what an installable package names.
+dependencies = ["astro-mine-platform"]
 
 [project.entry-points."astro_mine.allocate.solvers"]
 {backend} = "{module}:{_symbol(backend)}"

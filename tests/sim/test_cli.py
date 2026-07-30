@@ -131,7 +131,7 @@ def test_run_without_bench_names_the_extra(
     code, out, err = _run_cli("run", "lunar-polar-ice-prospecting-v1", capsys=capsys)
     assert code == 2
     assert out == ""
-    assert "astro-mine sim[bench]" in err
+    assert "astro-mine-platform[sim-bench]" in err
     assert "Traceback" not in err
 
 
@@ -169,7 +169,7 @@ def test_run_without_hub_names_the_extra(
     code, out, err = _run_cli("run", "x", "--registry", str(tmp_path), capsys=capsys)
     assert code == 2
     assert out == ""
-    assert "astro-mine sim[hub]" in err
+    assert "astro-mine-platform[sim-hub]" in err
     assert "Traceback" not in err
 
 

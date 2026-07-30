@@ -251,7 +251,7 @@ class _MindValidator:
 
     Mind owns the stack spec format, so it owns the checker. The umbrella routes; it holds no
     schema knowledge of its own and reimplements nothing here — ``validate`` calls the same
-    ``_cmd_validate`` that ``astro-mine-mind validate`` dispatches to, so the two surfaces cannot
+    ``_cmd_validate`` that ``astro-mine mind validate`` dispatches to, so the two surfaces cannot
     disagree about what is valid.
     """
 
@@ -278,7 +278,7 @@ class _MindValidator:
         return None
 
     def validate(self, paths: Sequence[str], *, as_json: bool) -> int:
-        """Run the same checker `astro-mine-mind validate` runs — not a second implementation."""
+        """Run the same checker `astro-mine mind validate` runs — not a second implementation."""
         del as_json  # Mind's checker has no JSON mode; its text report is the output
         return int(_cmd_validate(argparse.Namespace(stack=list(paths))))
 

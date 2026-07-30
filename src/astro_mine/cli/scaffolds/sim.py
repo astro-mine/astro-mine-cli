@@ -70,10 +70,15 @@ name = "{distribution}"
 version = "0.1.0"
 description = "A content provider contributed to the Astro-Mine platform."
 requires-python = ">=3.12"
-# Core only. NOT astro-mine-sim: Sim reconstructs your provider without importing you, and this
-# package must not import Sim back. NOT astro-mine-cli either -- the umbrella loads this; it is
-# not a dependency of it.
-dependencies = ["astro-mine-core"]
+# `astro-mine-platform` is the distribution that ships `astro_mine.core` -- there is no
+# per-component distribution to depend on, so this is what an installable package names.
+#
+# The dependency no longer says which components you may use, because one wheel ships them all.
+# The rule it used to encode is now an IMPORT rule, and it still holds: this package imports
+# `astro_mine.core` and nothing else from the platform. Sim reconstructs your provider without
+# importing you, so importing Sim back would close a loop it deliberately leaves open. NOT
+# astro-mine-cli either -- the umbrella loads this; it is not a dependency of it.
+dependencies = ["astro-mine-platform"]
 
 [project.entry-points."astro_mine.providers"]
 {kind} = "{module}:from_bundle"
