@@ -24,6 +24,7 @@ Components — `astro-mine <component> <verb>`:
   mind      validate and compose autonomy stacks
   guard     author, compile and falsify SafetySpecs
   hub       publish, discover and verify artifacts
+  seal      sign, verify and describe artifacts
   cloud     compile and submit cluster jobs
   studio    the design studio
 
@@ -48,7 +49,7 @@ else to add.
 
 ## The three routers
 
-Thirteen names are components. Three are not, because they answer a question no single
+Fourteen names are components. Three are not, because they answer a question no single
 component can: *who owns this?*
 
 | | |
@@ -74,6 +75,32 @@ $ astro-mine bench score lunar-polar-ice-prospecting-v1   # run and score a base
 $ astro-mine sim run  lunar-polar-ice-prospecting-v1      # one episode, no Bench ceremony
 $ astro-mine hub publish ./artifact --registry ./reg --key cosign.key
 ```
+
+## Signing something you were handed
+
+`astro-mine seal` is the loose-file half of the supply chain: no registry, no account, no
+network. `astro-mine hub` is the other half, for anything addressed by a registry reference.
+
+```console
+$ astro-mine hub keygen --out .                    # the one way to mint a keypair
+$ astro-mine seal sign ice-map.tif --key cosign.key --out ice-map.sig
+$ astro-mine seal verify ice-map.tif --signature ice-map.sig --key cosign.pub
+ok sha256:aa6a76d39dc9565c5774eed435c5983773e4849c3a7c5f3288d9d425748f2502
+```
+
+Change one byte and it fails closed, with a message rather than a traceback:
+
+```console
+$ astro-mine seal verify ice-map.tif --signature ice-map.sig --key cosign.pub
+astro-mine seal verify: verification failed: signature payload does not match the artifact digest
+$ echo $?
+1
+```
+
+`seal provenance` and `seal sbom` emit the other two documents `hub publish` attaches, and
+`seal inspect` reads any of the three back. `--key` is **required** on `verify`: a signature
+carries its own signer's public key, so checking against that alone proves nothing about who
+made it.
 
 ## Extending it
 
