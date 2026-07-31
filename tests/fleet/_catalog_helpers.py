@@ -13,6 +13,7 @@ from astro_mine.core.sadf.model import GeometryRef
 from astro_mine.fleet._core import canonical_json
 from astro_mine.fleet.library import load_reference
 from astro_mine.fleet.packaging.hub import publish_asset
+from astro_mine.hub.registry import open_registry
 from astro_mine.hub.supply_chain import generate_keypair
 
 
@@ -67,5 +68,10 @@ def _publish_geometry_asset(registry, base_dir) -> str:
             GeometryRef(role=GeometryRole.VISUAL, format=fmt, uri=uri, frame=cp.asset.root_frame)
         )
     private_pem, _ = generate_keypair()
-    publish_asset(load_sadf(canonical_json(cp)), registry, sign_key=private_pem, base_dir=base_dir)
+    publish_asset(
+        load_sadf(canonical_json(cp)),
+        open_registry(str(registry)),
+        sign_key=private_pem,
+        base_dir=base_dir,
+    )
     return "example.hopper-mk1:0.1.0"

@@ -436,6 +436,29 @@ def _cmd_resolve_family(args: argparse.Namespace) -> int:
     return 0
 
 
+def _open_registry(location: str, prog: str) -> object | None:
+    """Open ``location`` as a Hub registry, or report why and return ``None``.
+
+    `open_registry` dispatches on the string: a filesystem path gives the local OCI-layout store,
+    a registry URL like `ghcr.io/astro-mine` gives the remote OCI Distribution client. Choosing
+    between them is this command's call, which is why Fleet takes the opened registry rather than
+    a path (astro-mine-platform#5).
+
+    Opening is now *this* layer's job, so failing to open is this layer's error to report. It used
+    to happen inside `publish_asset`, under the command's own `except`, so `--registry` pointing at
+    a regular file surfaced as one line; hoisting the call out of that block turned the same
+    mistake into a traceback. `architecture/cli.md` §9 wants the one line, so the handling moves
+    with the call.
+    """
+    from astro_mine.hub.registry import open_registry
+
+    try:
+        return open_registry(location)
+    except OSError as exc:
+        print(f"{prog}: cannot open registry {location}: {exc.strerror or exc}", file=sys.stderr)
+        return None
+
+
 def _cmd_publish(args: argparse.Namespace) -> int:
     # Publishing is always signed: hub.md §9 defines no namespace tier for unsigned content, so
     # Hub's admission gate refuses it (astro-mine hub#32). `--sign` is therefore redundant on this
@@ -462,10 +485,14 @@ def _cmd_publish(args: argparse.Namespace) -> int:
     from astro_mine.fleet.capabilities import CapabilityError
     from astro_mine.fleet.packaging.hub import HubError, publish_asset, pull_asset
 
+    registry = _open_registry(args.registry, "fleet publish")
+    if registry is None:
+        return 1
+
     try:
         pub = publish_asset(
             loaded,
-            args.registry,
+            registry,
             sign_key=sign_key,
             base_dir=Path(args.path).parent,
             namespace=args.namespace,
@@ -489,7 +516,7 @@ def _cmd_publish(args: argparse.Namespace) -> int:
             return 1
         require = None if pub.signed else ()
         redoc = pull_asset(
-            args.registry, pub.digest, trusted_public_key_pem=trusted, require=require
+            registry, pub.digest, trusted_public_key_pem=trusted, require=require
         )
         if redoc.asset.identity.id != loaded.asset.identity.id:  # pragma: no cover - defensive
             print("fleet publish: round-trip identity mismatch", file=sys.stderr)
@@ -524,9 +551,16 @@ def _cmd_catalog(args: argparse.Namespace) -> int:
         print("fleet catalog: --materialize requires --preview <reference>", file=sys.stderr)
         return 1
 
+    # Opened once for the whole command, and by this command rather than by Fleet: `list_menu`
+    # used to build a concrete local `Registry` internally, so `--registry ghcr.io/astro-mine`
+    # could not work at all. Injecting it fixes that as a side effect (astro-mine-platform#5).
+    registry = _open_registry(args.registry, "fleet catalog")
+    if registry is None:
+        return 1
+
     if args.preview is not None and args.materialize is not None:
         try:
-            document = materialize_preview(args.registry, args.preview, args.materialize)
+            document = materialize_preview(registry, args.preview, args.materialize)
         except HubError as exc:
             print(f"fleet catalog: {exc}", file=sys.stderr)
             return 1
@@ -547,7 +581,7 @@ def _cmd_catalog(args: argparse.Namespace) -> int:
 
     if args.preview is not None:
         try:
-            refs = asset_preview(args.registry, args.preview, fmt=args.format)
+            refs = asset_preview(registry, args.preview, fmt=args.format)
         except HubError as exc:
             print(f"fleet catalog: {exc}", file=sys.stderr)
             return 1
@@ -578,7 +612,7 @@ def _cmd_catalog(args: argparse.Namespace) -> int:
 
     requires = [t for t in (args.requires or "").split(",") if t] or None
     try:
-        entries = list_menu(args.registry, requires=requires)
+        entries = list_menu(registry, requires=requires)
     except (HubError, CapabilityError) as exc:
         print(f"fleet catalog: {exc}", file=sys.stderr)
         return 1

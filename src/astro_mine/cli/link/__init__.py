@@ -63,6 +63,7 @@ def _add_arguments(parser: argparse.ArgumentParser) -> None:
 
 def _publish(args: argparse.Namespace) -> int:
     from astro_mine.core.messages import contact_plan_from_wire
+    from astro_mine.hub.registry import open_registry
     from astro_mine.link.registry import publish_contact_plan
 
     plan = contact_plan_from_wire(Path(args.plan).read_bytes())
@@ -74,7 +75,7 @@ def _publish(args: argparse.Namespace) -> int:
 
     artifact = publish_contact_plan(
         plan,
-        registry_path=args.registry,
+        registry=open_registry(args.registry),
         name=args.name,
         version=args.version,
         scenario_id=args.scenario_id,

@@ -57,6 +57,7 @@ def _add_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _cmd_publish(args: argparse.Namespace) -> int:
+    from astro_mine.hub.registry import open_registry
     from astro_mine.hub.supply_chain import generate_keypair
     from astro_mine.prospect.priors import load_prior
     from astro_mine.prospect.publish import publish_prior
@@ -70,7 +71,7 @@ def _cmd_publish(args: argparse.Namespace) -> int:
             args.public_key_out.write_bytes(public_pem)
     artifact = publish_prior(
         prior,
-        registry_path=args.registry,
+        registry=open_registry(args.registry),
         private_key_pem=private_pem,
         version=args.version,
     )

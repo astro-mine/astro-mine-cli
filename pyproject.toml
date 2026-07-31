@@ -59,7 +59,15 @@ Issues = "https://github.com/astro-mine/astro-mine-cli/issues"
 # This must not float. The two repos are one change split in half -- the platform stops
 # shipping `astro_mine/cli/`, this package starts providing it -- so a pin that moved could
 # resolve a platform that still installs files at this package's import path.
-astro-mine-platform = { git = "https://github.com/astro-mine/astro-mine-platform.git", rev = "df45842518c7e53c1110be1f5549d103e2db0105" }
+#
+# Moved for astro-mine-platform#5, which is the same situation a second time: the platform moved
+# four shared contracts to Core as a clean break and made Hub an injected collaborator, and this
+# package is the caller that has to hand the registry in. The old rev resolves a platform where
+# `publish_prior` still takes `registry_path` and `TierPlugin` still lives in Mind, so it cannot
+# stay.
+#
+# This is astro-mine-platform#7's squash commit on `main` -- the merge that moved those contracts.
+astro-mine-platform = { git = "https://github.com/astro-mine/astro-mine-platform.git", rev = "72e139f5cb37e4df0e97fd7ba241e49f79867320" }
 
 [dependency-groups]
 dev = [
