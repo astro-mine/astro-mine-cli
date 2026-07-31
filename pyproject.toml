@@ -66,12 +66,8 @@ Issues = "https://github.com/astro-mine/astro-mine-cli/issues"
 # `publish_prior` still takes `registry_path` and `TierPlugin` still lives in Mind, so it cannot
 # stay.
 #
-# **This rev is the platform PR's branch head, not a commit on `main`.** It exists so this branch
-# resolves and tests against the platform it is written for; astro-mine-platform#7 squash-merges to
-# a *different* SHA, and this line MUST be re-pinned to that SHA before this PR merges. Merging
-# with a branch-head pin would leave `main` resolving a commit that only exists on a deleted
-# branch.
-astro-mine-platform = { git = "https://github.com/astro-mine/astro-mine-platform.git", rev = "eb0dffc" }
+# This is astro-mine-platform#7's squash commit on `main` -- the merge that moved those contracts.
+astro-mine-platform = { git = "https://github.com/astro-mine/astro-mine-platform.git", rev = "72e139f5cb37e4df0e97fd7ba241e49f79867320" }
 
 [dependency-groups]
 dev = [
