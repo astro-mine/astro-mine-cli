@@ -81,6 +81,22 @@ from astro_mine.core.scoring import ScoringRefused
 
 __all__ = ["main"]
 
+#: **The command was invoked correctly and could not complete** (cli.md §9). A missing optional
+#: extra, an unreadable file, content that would not fetch, a runner that refused to score: nothing
+#: about the invocation is wrong, the environment is incomplete or the data did not hold up.
+#
+# Every failure path here used to answer 2, which is the *other* meaning (astro-mine-cli#24). A
+# caller that branches on the status -- retry on 1, fail the build on 2 -- got the wrong answer from
+# this component and the right one from `hub`, `seal` and `studio`, which is worse than a uniform
+# convention in either direction: nothing in the status said which of the two it was.
+_FAILED = 1
+
+#: **The user named something that does not exist, or supplied nothing where something was
+#: required.** An unknown scenario id, an unregistered ``--runner``, a catalog DSN neither flagged
+#: nor in the environment. Mirrors :data:`astro_mine.cli._dispatch._USAGE_ERROR` and argparse's own
+#: convention, which already produces this status for free on a genuine parse error.
+_USAGE_ERROR = 2
+
 
 def _format_scorecard(card: Scorecard) -> str:
     """Render a scorecard as an aligned, human-readable table.
@@ -121,12 +137,22 @@ def _score(args: argparse.Namespace) -> int:
         spec = load_scenario(args.scenario_id)
     except KeyError as exc:
         print(f"error: {exc}", file=args.stderr)
-        return 2
+        return _USAGE_ERROR
     try:
         provider = load_runner_provider(args.runner)
     except RunnerNotAvailableError as exc:
+        # A `--runner` name nothing claims. Deliberately 2, not 1: the user named something that
+        # does not exist, and the message lists what does (astro-mine-cli#24).
+        #
+        # One reading pulls the other way. `--runner sim` without `astro-mine-platform[sim-bench]`
+        # is *also* a missing optional extra, which this component now answers with 1 -- and the
+        # registry raises the same exception for both. Telling them apart needs a discriminator on
+        # `RunnerNotAvailableError` in the platform, so the split stops here: an unresolved runner
+        # name is one status, and the install hint in the message is what distinguishes the case
+        # that is really about packaging. The path is unreachable today anyway (Sim ships in the
+        # same distribution, so `sim` always registers) -- see the skipped test that covers it.
         print(f"error: {exc}", file=args.stderr)
-        return 2
+        return _USAGE_ERROR
     # Constructing the runner can fail even when the provider is registered — an engine-backed
     # runner may need content or a store it cannot find (e.g. the `sim` runner without
     # $ASTRO_MINE_HUB_REGISTRY). Surface that as a clean error, never a traceback (CX-LOCAL): the
@@ -148,8 +174,11 @@ def _score(args: argparse.Namespace) -> int:
         # built-in included, fall back to BaselinePolicy unchanged (astro-mine sim#61).
         policy = default_policy_for(provider, spec, store)
     except (RunnerNotAvailableError, RuntimeError, OSError, ImportError) as exc:
+        # A runner that *is* registered and cannot start: no content store to read, an extra it
+        # needs absent, a store it cannot open. The `--runner` name resolved, so the invocation was
+        # correct and the run could not complete.
         print(f"error: {exc}", file=args.stderr)
-        return 2
+        return _FAILED
     seeds = tuple(args.seeds) if args.seeds else None
     # A runner may decline mid-run: `sim` refuses a scenario whose pinned providers did not rebuild,
     # because the scorecard would be a claim about content it never modelled (astro-mine sim#67).
@@ -163,7 +192,7 @@ def _score(args: argparse.Namespace) -> int:
         card = run(spec, policy, runner=episode_runner, runner_id=runner_id, seeds=seeds)
     except ScoringRefused as exc:
         print(f"error: {exc}", file=args.stderr)
-        return 2
+        return _FAILED
     output = card.model_dump_json(indent=2) if args.json else _format_scorecard(card)
     print(output, file=args.stdout)
     return 0
@@ -198,15 +227,17 @@ def _fetch(args: argparse.Namespace) -> int:
         spec = load_scenario(args.scenario_id)
     except KeyError as exc:
         print(f"error: {exc}", file=args.stderr)
-        return 2
+        return _USAGE_ERROR
 
     trusted_key: bytes | None = None
     if args.trusted_key is not None:
         try:
             trusted_key = Path(args.trusted_key).read_bytes()
         except OSError as exc:
+            # An unreadable file, not a name in a namespace: the flag was given and parsed, and
+            # what it points at did not open.
             print(f"error: cannot read --trusted-key: {exc}", file=args.stderr)
-            return 2
+            return _FAILED
 
     store_path = resolve_store_path(args.registry)
     print(f"fetching {len(spec.content_refs())} pins into {store_path}", file=args.stdout)
@@ -219,8 +250,10 @@ def _fetch(args: argparse.Namespace) -> int:
             on_event=lambda message: print(f"  {message}", file=args.stdout),
         )
     except FetchError as exc:
+        # Content that did not resolve, did not reproduce its pinned digest, or needs the `[fetch]`
+        # extra nobody installed. Every one of those is the environment, not the command line.
         print(f"error: {exc}", file=args.stderr)
-        return 2
+        return _FAILED
 
     moved = sum(pin.size_bytes for pin in pins if pin.mirrored)
     fresh = sum(1 for pin in pins if pin.mirrored)
@@ -265,8 +298,10 @@ def _zoo_sync(args: argparse.Namespace) -> int:
     """Seed the Postgres/pgvector catalog from the packaged zoo (bench#33 AC4 — the migration)."""
     dsn = _dsn(args)
     if not dsn:
+        # A required input, supplied by neither the flag nor its environment fallback -- exactly
+        # what argparse answers with 2 when there is no env door to make the flag optional.
         print(f"error: pass --dsn or set ${CATALOG_DSN_ENV}", file=args.stderr)
-        return 2
+        return _USAGE_ERROR
     catalog = open_sql_catalog(dsn)
     seeded = catalog.seed_from(FilesystemCatalog())
     for entry in seeded:
@@ -282,7 +317,7 @@ def _zoo_search(args: argparse.Namespace) -> int:
     dsn = _dsn(args)
     if not dsn:
         print(f"error: pass --dsn or set ${CATALOG_DSN_ENV}", file=args.stderr)
-        return 2
+        return _USAGE_ERROR
     hits = open_sql_catalog(dsn).search(" ".join(args.query), limit=args.limit)
     if not hits:
         print("no scenarios indexed; run `astro-mine bench zoo-sync` first", file=args.stdout)
@@ -299,6 +334,11 @@ def _zoo_search(args: argparse.Namespace) -> int:
 # NOT COVERED, deliberately. Needs a live leaderboard: reads a token, POSTs a
 # submission, polls the job to a
 # terminal state. Reachable offline only as far as the refusal, which IS tested.
+#
+# The exclusion is an accounting decision about the network path, not a claim that no test enters
+# this function: the two guards below -- the missing `--scenario-id` and the unreadable token --
+# are exercised offline, because they are the two of `submit`'s exit statuses that the exit-code
+# split has to pin (astro-mine-cli#24).
 def _submit(args: argparse.Namespace) -> int:  # pragma: no cover
     """Submit a policy to a leaderboard and, with ``--wait``, follow it to a verdict.
 
@@ -314,14 +354,18 @@ def _submit(args: argparse.Namespace) -> int:  # pragma: no cover
     from astro_mine.bench.submit import await_job, read_token, submit_hub, submit_policy
 
     if args.job is None and not args.scenario_id:
+        # A conditionally-required argument argparse cannot express, so the check is hand-rolled --
+        # but it is argparse's own case, and answers with argparse's own status.
         print("error: --scenario-id is required unless --job is given", file=args.stderr)
-        return 2
+        return _USAGE_ERROR
 
     try:
         token = read_token(args.token_file)
     except SubmitError as exc:
+        # No token in the environment, or a token file that did not open. The command names a
+        # leaderboard correctly and cannot authenticate to it: the environment, not the argv.
         print(f"error: {exc}", file=args.stderr)
-        return 2
+        return _FAILED
 
     try:
         if args.hub_ref is not None:
@@ -359,7 +403,7 @@ def _submit(args: argparse.Namespace) -> int:  # pragma: no cover
         )
     except SubmitError as exc:
         print(f"error: {exc}", file=args.stderr)
-        return 1
+        return _FAILED
 
     _print_submission(args, submission)
     return 0
@@ -376,15 +420,15 @@ def _report_job(args: argparse.Namespace, job: JobRecord) -> int:  # pragma: no 
             f"error: submission {job.status.value}: {job.detail or 'no detail given'}",
             file=args.stderr,
         )
-        return 1
+        return _FAILED
     if job.result_id is None:
         print(f"job finished {job.status.value} but carries no result id", file=args.stderr)
-        return 1
+        return _FAILED
     try:
         submission = get_submission(args.to, job.result_id)
     except SubmitError as exc:
         print(f"error: {exc}", file=args.stderr)
-        return 1
+        return _FAILED
     _print_submission(args, submission)
     return 0
 

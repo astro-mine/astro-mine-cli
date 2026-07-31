@@ -129,7 +129,9 @@ def test_run_without_bench_names_the_extra(
         lambda name, *a, **k: None if name == "astro_mine.bench" else real(name, *a, **k),
     )
     code, out, err = _run_cli("run", "lunar-polar-ice-prospecting-v1", capsys=capsys)
-    assert code == 2
+    # 1, not 2: nothing was typed wrong. The invocation is exactly right and the extra is not
+    # installed, so the status must point at the environment rather than the command line (#24).
+    assert code == 1
     assert out == ""
     assert "astro-mine-platform[sim-bench]" in err
     assert "Traceback" not in err
@@ -140,7 +142,7 @@ def test_run_without_a_registry_is_a_clean_error(
 ) -> None:
     monkeypatch.delenv(_ENV, raising=False)
     code, out, err = _run_cli("run", "lunar-polar-ice-prospecting-v1", capsys=capsys)
-    assert code == 2
+    assert code == 2  # a required input supplied by neither the flag nor its env fallback
     assert out == ""
     assert _ENV in err or "--registry" in err
     assert "Traceback" not in err
@@ -152,7 +154,7 @@ def test_run_unknown_scenario_id_is_a_clean_error(
     code, _out, err = _run_cli(
         "run", "no-such-scenario", "--registry", str(tmp_path), capsys=capsys
     )
-    assert code == 2
+    assert code == 2  # the user named something that does not exist
     assert "unknown scenario id" in err
     assert "Traceback" not in err
 
@@ -167,7 +169,7 @@ def test_run_without_hub_names_the_extra(
 
     monkeypatch.setattr(runtime, "open_bundle_store", _no_hub)
     code, out, err = _run_cli("run", "x", "--registry", str(tmp_path), capsys=capsys)
-    assert code == 2
+    assert code == 1  # a missing optional extra, like the Bench adapter above (#24)
     assert out == ""
     assert "astro-mine-platform[sim-hub]" in err
     assert "Traceback" not in err
@@ -319,7 +321,7 @@ def test_missing_metakernel_is_a_clean_error(
         str(tmp_path / "absent.tm"),
         capsys=capsys,
     )
-    assert code == 2
+    assert code == 1  # a file that did not open, not a name that resolved to nothing (#24)
     assert "--metakernel" in err
     assert "ASTRO_MINE_SPICE_METAKERNEL" in err
     assert "naif.jpl.nasa.gov" in err
@@ -351,7 +353,7 @@ def test_unfurnished_geometry_names_the_two_knobs(
         str(tmp_path / "run.mcap"),
         capsys=capsys,
     )
-    assert code == 2
+    assert code == 1  # invoked correctly; the environment has no kernels (#24)
     assert "cannot resolve position of 'SUN'" in err  # Spice's diagnosis is kept
     assert "--metakernel" in err  # and the remedy is added
     assert "ASTRO_MINE_SPICE_METAKERNEL" in err
