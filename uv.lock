@@ -114,7 +114,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "astro-mine-platform", git = "https://github.com/astro-mine/astro-mine-platform.git?rev=df45842518c7e53c1110be1f5549d103e2db0105" }]
+requires-dist = [{ name = "astro-mine-platform", git = "https://github.com/astro-mine/astro-mine-platform.git?rev=72e139f5cb37e4df0e97fd7ba241e49f79867320" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -129,7 +129,7 @@ dev = [
 [[package]]
 name = "astro-mine-platform"
 version = "0.1.0"
-source = { git = "https://github.com/astro-mine/astro-mine-platform.git?rev=df45842518c7e53c1110be1f5549d103e2db0105#df45842518c7e53c1110be1f5549d103e2db0105" }
+source = { git = "https://github.com/astro-mine/astro-mine-platform.git?rev=72e139f5cb37e4df0e97fd7ba241e49f79867320#72e139f5cb37e4df0e97fd7ba241e49f79867320" }
 dependencies = [
     { name = "cryptography" },
     { name = "gpytorch" },
@@ -149,6 +149,7 @@ dependencies = [
     { name = "referencing" },
     { name = "scipy" },
     { name = "spiceypy" },
+    { name = "svcs" },
     { name = "torch", version = "2.13.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "python_full_version < '3.15' and sys_platform == 'darwin'" },
     { name = "torch", version = "2.13.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "python_full_version >= '3.15' or sys_platform != 'darwin'" },
     { name = "trimesh" },
@@ -2300,6 +2301,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/0d/c9/f14fdf71bb8957e0c7e39db69bbdf12b5c80f4ef775fdfa127bf4e0d6760/sqlalchemy-2.0.51-cp314-cp314t-win32.whl", hash = "sha256:9161cfc9efce70d1715f47d6ff40f79c6778c00d53be4fbc09d70301e4b83ba7", size = 2151313, upload-time = "2026-06-15T16:03:39.127Z" },
     { url = "https://files.pythonhosted.org/packages/6a/c6/673e618e6f4f297e126d9b56ea2f6478708f6c1af4e3223835c22e2c3697/sqlalchemy-2.0.51-cp314-cp314t-win_amd64.whl", hash = "sha256:159bb6ba32059f57ad7375a8f50d844dd2f19d14954ecf820cd33e20debd46b2", size = 2186280, upload-time = "2026-06-15T16:03:40.569Z" },
     { url = "https://files.pythonhosted.org/packages/e2/22/dbf013a12ec759e54a34a119e9e217435b3f71b2dd5c61a7ade0a25dae87/sqlalchemy-2.0.51-py3-none-any.whl", hash = "sha256:bb024d8b621d0be75f4f44ecc7c950450026e76d66dc8f791bb5331d7fed59d5", size = 1944334, upload-time = "2026-06-15T16:09:22.418Z" },
+]
+
+[[package]]
+name = "svcs"
+version = "26.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "attrs" },
+    { name = "typing-extensions", marker = "python_full_version < '3.15'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/50/ea/10957367bf49b401a8100ff434f453a340cc30c9c2fc3b2367e6c282f03d/svcs-26.1.0.tar.gz", hash = "sha256:71550e3b228d529448136d78013b2d65528eec4632b8779f8f89c1d8585eed99", size = 906116, upload-time = "2026-07-13T10:09:38.322Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5e/8c/5f9441100851bea8f4735cf54a2980d2ad9300a5933c1d5e416448fd789a/svcs-26.1.0-py3-none-any.whl", hash = "sha256:87428c6371af6ae5d0936193613ba4e463118f36b43e15a708f417a8e0b85520", size = 23609, upload-time = "2026-07-13T10:09:36.945Z" },
 ]
 
 [[package]]

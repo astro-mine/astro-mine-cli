@@ -41,6 +41,25 @@ from astro_mine.spice import SpiceGeometryError
 #: local OCI-layout Hub registry (the workspace convention; ``astro-mine bench fetch`` fills one).
 _REGISTRY_ENV = "ASTRO_MINE_HUB_REGISTRY"
 
+#: **The command was invoked correctly and could not complete** (cli.md §9). A missing optional
+#: extra, an unreadable file, a kernel pool that is not furnished: nothing about the invocation is
+#: wrong, the environment is incomplete or the data did not hold up.
+#
+# Every failure path here used to answer 2, which is the *other* meaning (astro-mine-cli#24). The
+# clearest case is `run` without the Bench adapter: the invocation is exactly right and the extra is
+# not installed, so 2 pointed the reader at their command line when the problem was their
+# environment -- and a good message made that *more* misleading, not less, because the command
+# looked like it had been typed wrong. `hub`, `seal` and `studio` already split the two, so a
+# uniform 2 was not even internally consistent: it was three components saying one thing and two
+# saying another, with nothing in the status to tell a script which convention it was reading.
+_FAILED = 1
+
+#: **The user named something that does not exist, or supplied nothing where something was
+#: required.** An unknown scenario id; a content store neither flagged nor in the environment.
+#: Mirrors :data:`astro_mine.cli._dispatch._USAGE_ERROR` and argparse's own convention, which
+#: already produces this status for free on a genuine parse error.
+_USAGE_ERROR = 2
+
 
 def _record(args: argparse.Namespace) -> int:
     """Run a **Sim** ``Scenario`` JSON document and record it to MCAP; print the determinism key."""
@@ -74,7 +93,7 @@ def _run(args: argparse.Namespace) -> int:
             "install it with `pip install 'astro-mine-platform[sim-bench]'`.",
             file=sys.stderr,
         )
-        return 2
+        return _FAILED
 
     registry = args.registry or os.environ.get(_REGISTRY_ENV)
     if not registry:
@@ -85,7 +104,10 @@ def _run(args: argparse.Namespace) -> int:
             "  populate one with `astro-mine bench fetch <scenario>`.",
             file=sys.stderr,
         )
-        return 2
+        # A required input, supplied by neither the flag nor its environment fallback. `--registry`
+        # is not `required=True` only because of that fallback -- with no env door it would be, and
+        # argparse would answer this exact case with 2 itself.
+        return _USAGE_ERROR
 
     from astro_mine.sim.bench import materialize_bench_run
     from astro_mine.sim.runtime import open_bundle_store
@@ -99,7 +121,7 @@ def _run(args: argparse.Namespace) -> int:
             "install it with `pip install 'astro-mine-platform[sim-hub]'`.",
             file=sys.stderr,
         )
-        return 2
+        return _FAILED
 
     seed = 0 if args.seed is None else args.seed
     try:
@@ -110,7 +132,7 @@ def _run(args: argparse.Namespace) -> int:
             "`astro-mine bench list` shows the catalog.",
             file=sys.stderr,
         )
-        return 2
+        return _USAGE_ERROR
 
     # A pin can resolve by digest and still rebuild nothing, because content and code ship
     # separately: `astro-mine bench fetch` obtains the bundles, but turning a world bundle back
@@ -234,8 +256,9 @@ class _Command:
     def run(self, args: argparse.Namespace) -> int:
         # The two failure classes that are always the user's environment rather than a Sim
         # defect: an unusable kernel configuration, and a run that needs SPICE geometry with
-        # no pool furnished. Both get a named message and exit 2; anything else raises, so a
-        # real defect is never dressed up as bad input.
+        # no pool furnished. Both get a named message and exit 1 -- the invocation was correct
+        # and the run could not complete. Anything else raises, so a real defect is never
+        # dressed up as bad input.
         #
         # The container back-compat that `astro_mine.sim.__main__` performs -- a leading flag
         # rewritten to `record`, so Cloud's `python -m astro_mine.sim --scenario …` ENTRYPOINT
@@ -244,15 +267,18 @@ class _Command:
         try:
             return int(args.func(args))
         except KernelConfigurationError as exc:
+            # A metakernel that is not there, or an SPK pool that stops short of the episode. Both
+            # are a file or its contents, not a name in a namespace -- a malformed *flag value*
+            # (`--seed abc`) is argparse's 2 and never reaches here.
             print(f"error: {exc}", file=sys.stderr)
-            return 2
+            return _FAILED
         except SpiceGeometryError as exc:
             print(
                 "error: this run needs SPICE geometry and no kernel pool is furnished.\n"
                 f"  {exc}\n  " + kernel_help(),
                 file=sys.stderr,
             )
-            return 2
+            return _FAILED
 
 
 command = _Command()

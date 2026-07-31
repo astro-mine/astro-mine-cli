@@ -83,7 +83,7 @@ def test_list_prints_the_zoo() -> None:
 
 def test_unknown_scenario_is_a_clean_error() -> None:
     code, out, err = _run("score", "no-such-scenario")
-    assert code == 2
+    assert code == 2  # the user named something that does not exist
     assert "error" in err and "no-such-scenario" in err
     assert out == ""
 
@@ -112,7 +112,13 @@ def test_score_json_names_the_runner() -> None:
     "distribution, so the 'sim runner not installed' install-hint path cannot occur"
 )
 def test_score_runner_sim_without_sim_is_a_clean_error() -> None:
-    """`--runner sim` with no Sim installed fails with an install hint, not a traceback."""
+    """`--runner sim` with no Sim installed fails with an install hint, not a traceback.
+
+    2, on the reading #24 settled: an unresolved `--runner` name is a name that resolves to
+    nothing, and the registry raises the same exception whether the name is unknown or merely
+    unregistered. The install hint in the message is what marks this one as really a packaging
+    problem; splitting the two statuses would need a discriminator on the platform's exception.
+    """
     code, out, err = _run("score", "--runner", "sim")
     assert code == 2
     assert out == ""
@@ -122,14 +128,18 @@ def test_score_runner_sim_without_sim_is_a_clean_error() -> None:
 
 def test_score_unknown_runner_lists_the_registered_ones() -> None:
     code, _, err = _run("score", "--runner", "nope")
-    assert code == 2
+    assert code == 2  # the user named something that does not exist
     assert "unknown runner 'nope'" in err
     assert "fixture" in err  # the built-in is named so the user can recover
 
 
 def test_score_runner_that_fails_to_start_is_a_clean_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """A *registered* runner that can't construct (e.g. the `sim` runner with no content store)
-    surfaces the provider's actionable message, not a traceback."""
+    surfaces the provider's actionable message, not a traceback.
+
+    The status is the other side of the split from `--runner nope`: the name resolved, so the
+    invocation was correct and the run could not complete (#24).
+    """
 
     class _NeedsAStore:
         runner_id = "sim/0.1.0"
@@ -144,7 +154,7 @@ def test_score_runner_that_fails_to_start_is_a_clean_error(monkeypatch: pytest.M
 
     monkeypatch.setattr("astro_mine.cli.bench.load_runner_provider", lambda _name: _NeedsAStore())
     code, out, err = _run("score", "--runner", "sim")
-    assert code == 2
+    assert code == 1
     assert out == ""
     assert "needs a content store" in err
     assert "Traceback" not in err
@@ -208,7 +218,7 @@ def test_the_catalog_commands_need_a_dsn(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.delenv(CATALOG_DSN_ENV, raising=False)
     for command in (("zoo-sync",), ("zoo-search", "ice")):
         code, _, err = _run(*command)
-        assert code == 2
+        assert code == 2  # a required input supplied by neither the flag nor its env fallback
         assert CATALOG_DSN_ENV in err
 
 
@@ -250,13 +260,13 @@ def test_fetch_names_the_pinned_signer_when_a_key_is_given(
 
 def test_fetch_unreadable_trusted_key_is_a_clean_error(tmp_path: pathlib.Path) -> None:
     code, _, err = _run("fetch", "--trusted-key", str(tmp_path / "missing.pub"))
-    assert code == 2
+    assert code == 1  # a file that did not open, not a name that resolved to nothing (#24)
     assert "--trusted-key" in err
 
 
 def test_fetch_unknown_scenario_is_a_clean_error() -> None:
     code, _, err = _run("fetch", "no-such-scenario")
-    assert code == 2
+    assert code == 2  # the user named something that does not exist
     assert "error:" in err
 
 
@@ -268,8 +278,51 @@ def test_fetch_failure_is_a_clean_error_not_a_traceback(monkeypatch: pytest.Monk
 
     monkeypatch.setattr("astro_mine.cli.bench.fetch_scenario_content", boom)
     code, _, err = _run("fetch")
-    assert code == 2
+    assert code == 1  # content that did not resolve, or an extra nobody installed (#24)
     assert "--extra fetch" in err
+
+
+# --- submit: the two statuses reachable without a leaderboard (#24) -----------------------------
+#
+# `submit` wants a live leaderboard, so the rest of it is out of reach offline. These two guards are
+# not: they run before anything is sent, and they are one of each side of the split. Pinned here
+# because #24's rule has to be asserted per path -- an unasserted status is one that drifts.
+
+
+def test_submit_without_a_scenario_id_is_a_usage_error() -> None:
+    """`--scenario-id` is required unless `--job` — a conditional argparse cannot express."""
+    code, out, err = _run("submit", "--to", "https://example.invalid", "--policy-ref", "m:a")
+    assert code == 2
+    assert out == ""
+    assert "--scenario-id" in err
+    assert "Traceback" not in err
+
+
+def test_submit_without_a_token_is_a_failure_not_a_usage_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Every flag is real and correctly spelled; the environment holds no credential.
+
+    Nothing is sent — `read_token` fails closed rather than letting the request go out
+    unauthenticated — so this is reachable offline, and it is a 1: pointing the reader at their
+    command line would send them looking for a typo that is not there.
+    """
+    from astro_mine.bench.submit import TOKEN_ENV
+
+    monkeypatch.delenv(TOKEN_ENV, raising=False)
+    code, out, err = _run(
+        "submit",
+        "--to",
+        "https://example.invalid",
+        "--policy-ref",
+        "m:a",
+        "--scenario-id",
+        ANCHOR_SCENARIO_ID,
+    )
+    assert code == 1
+    assert out == ""
+    assert TOKEN_ENV in err
+    assert "Traceback" not in err
 
 
 def test_score_registry_flag_is_passed_to_the_runner(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -315,7 +368,7 @@ def test_score_refusal_is_a_clean_error(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setattr("astro_mine.cli.bench.load_runner_provider", lambda _name: _Refuses())
     code, out, err = _run("score", "--runner", "sim", "--seeds", "1001")
 
-    assert code == 2
+    assert code == 1  # a runner that refused to score: the run failed, the argv was fine (#24)
     assert out == ""  # no half-printed scorecard
     assert "refusing to score this scenario" in err
     assert "astro-mine worlds" in err  # the package that fixes it survives into the message
