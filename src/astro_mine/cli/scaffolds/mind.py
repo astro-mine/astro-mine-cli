@@ -187,7 +187,7 @@ from typing import Any
 
 from astro_mine.core.messages.model import ActionBatch
 from astro_mine.core.registry import load_manifest
-from astro_mine.mind.registry import TierPlugin
+from astro_mine.core.registry.tier import TierPlugin
 
 
 class {symbol.title().replace("_", "")}:

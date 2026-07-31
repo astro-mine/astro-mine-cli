@@ -38,11 +38,11 @@ import pathlib
 import pytest
 from astro_mine.bench.baseline import (
     REFERENCE_EPISODE_RUNNER_ID,
-    ScoringRefused,
     reference_episode_runner,
 )
 from astro_mine.bench.content import FetchError
 from astro_mine.bench.zoo import ANCHOR_SCENARIO_ID, list_scenarios
+from astro_mine.core.scoring import ScoringRefused
 
 
 def _run(*argv: str) -> tuple[int, str, str]:
@@ -347,8 +347,13 @@ def test_score_does_not_swallow_a_genuine_runner_bug(monkeypatch: pytest.MonkeyP
 
 
 def test_scoring_refused_is_public_api() -> None:
-    """Runners import it to raise it, so it is part of the seam, not an internal detail."""
-    from astro_mine.bench import baseline
+    """Runners import it to raise it, so it is part of the seam, not an internal detail.
 
-    assert "ScoringRefused" in baseline.__all__
-    assert issubclass(baseline.ScoringRefused, RuntimeError)
+    The seam moved to the waist with the rest of the scoring vocabulary
+    (astro-mine-platform#5): both sides name this type — the runner to raise it, the harness to
+    catch it — so Bench owning it was the same defect as Bench owning ``EpisodeTrace``.
+    """
+    from astro_mine.core import scoring
+
+    assert "ScoringRefused" in scoring.__all__
+    assert issubclass(scoring.ScoringRefused, RuntimeError)

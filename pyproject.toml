@@ -59,7 +59,19 @@ Issues = "https://github.com/astro-mine/astro-mine-cli/issues"
 # This must not float. The two repos are one change split in half -- the platform stops
 # shipping `astro_mine/cli/`, this package starts providing it -- so a pin that moved could
 # resolve a platform that still installs files at this package's import path.
-astro-mine-platform = { git = "https://github.com/astro-mine/astro-mine-platform.git", rev = "df45842518c7e53c1110be1f5549d103e2db0105" }
+#
+# Moved for astro-mine-platform#5, which is the same situation a second time: the platform moved
+# four shared contracts to Core as a clean break and made Hub an injected collaborator, and this
+# package is the caller that has to hand the registry in. The old rev resolves a platform where
+# `publish_prior` still takes `registry_path` and `TierPlugin` still lives in Mind, so it cannot
+# stay.
+#
+# **This rev is the platform PR's branch head, not a commit on `main`.** It exists so this branch
+# resolves and tests against the platform it is written for; astro-mine-platform#7 squash-merges to
+# a *different* SHA, and this line MUST be re-pinned to that SHA before this PR merges. Merging
+# with a branch-head pin would leave `main` resolving a commit that only exists on a deleted
+# branch.
+astro-mine-platform = { git = "https://github.com/astro-mine/astro-mine-platform.git", rev = "eb0dffc" }
 
 [dependency-groups]
 dev = [

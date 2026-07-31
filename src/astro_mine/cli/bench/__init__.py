@@ -54,7 +54,6 @@ from pathlib import Path
 from astro_mine.bench.baseline import (
     REFERENCE_EPISODE_RUNNER_ID,
     RunnerNotAvailableError,
-    ScoringRefused,
     default_policy_for,
     load_runner_provider,
     run,
@@ -78,6 +77,7 @@ from astro_mine.bench.zoo import (
     load_scenario,
     open_sql_catalog,
 )
+from astro_mine.core.scoring import ScoringRefused
 
 __all__ = ["main"]
 

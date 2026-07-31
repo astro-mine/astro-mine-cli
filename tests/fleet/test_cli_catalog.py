@@ -29,6 +29,7 @@ import pytest
 from astro_mine.core.sadf import SadfDocument
 from astro_mine.fleet.library import load_reference
 from astro_mine.fleet.packaging.hub import publish_asset
+from astro_mine.hub.registry import open_registry
 from astro_mine.hub.supply_chain import generate_keypair
 
 from ._catalog_helpers import _novel_geometry_asset, _publish_geometry_asset
@@ -47,7 +48,7 @@ def _signed_registry(tmp_path: Path, docs: list[SadfDocument]) -> Path:
     private_pem, _ = generate_keypair()
     reg = tmp_path / "reg"
     for doc in docs:
-        publish_asset(doc, reg, sign_key=private_pem)
+        publish_asset(doc, open_registry(str(reg)), sign_key=private_pem)
     return reg
 
 

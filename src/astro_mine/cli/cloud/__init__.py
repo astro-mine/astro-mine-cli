@@ -26,7 +26,7 @@ from astro_mine.cloud.submission.sweepspec import SweepSpec
 from astro_mine.cloud.submission.workflowspec import WorkflowSpec
 
 if TYPE_CHECKING:
-    from astro_mine.cloud.artifacts.store import ArtifactStore
+    from astro_mine.core.artifacts import ArtifactStore
 
 __all__ = ["main"]
 

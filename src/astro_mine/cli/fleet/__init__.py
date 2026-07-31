@@ -461,11 +461,18 @@ def _cmd_publish(args: argparse.Namespace) -> int:
 
     from astro_mine.fleet.capabilities import CapabilityError
     from astro_mine.fleet.packaging.hub import HubError, publish_asset, pull_asset
+    from astro_mine.hub.registry import open_registry
+
+    # `open_registry` dispatches on the string: a filesystem path → the local OCI-layout store,
+    # a registry URL like `ghcr.io/astro-mine` → the remote OCI Distribution client. Choosing
+    # between them is this command's call, which is why Fleet takes the opened registry rather
+    # than a path (astro-mine-platform#5).
+    registry = open_registry(args.registry)
 
     try:
         pub = publish_asset(
             loaded,
-            args.registry,
+            registry,
             sign_key=sign_key,
             base_dir=Path(args.path).parent,
             namespace=args.namespace,
@@ -489,7 +496,7 @@ def _cmd_publish(args: argparse.Namespace) -> int:
             return 1
         require = None if pub.signed else ()
         redoc = pull_asset(
-            args.registry, pub.digest, trusted_public_key_pem=trusted, require=require
+            registry, pub.digest, trusted_public_key_pem=trusted, require=require
         )
         if redoc.asset.identity.id != loaded.asset.identity.id:  # pragma: no cover - defensive
             print("fleet publish: round-trip identity mismatch", file=sys.stderr)
@@ -519,14 +526,20 @@ def _cmd_catalog(args: argparse.Namespace) -> int:
     from astro_mine.fleet.capabilities import CapabilityError
     from astro_mine.fleet.catalog import asset_preview, list_menu, materialize_preview
     from astro_mine.fleet.packaging.hub import HubError
+    from astro_mine.hub.registry import open_registry
 
     if args.materialize is not None and args.preview is None:
         print("fleet catalog: --materialize requires --preview <reference>", file=sys.stderr)
         return 1
 
+    # Opened once for the whole command, and by this command rather than by Fleet: `list_menu`
+    # used to build a concrete local `Registry` internally, so `--registry ghcr.io/astro-mine`
+    # could not work at all. Injecting it fixes that as a side effect (astro-mine-platform#5).
+    registry = open_registry(args.registry)
+
     if args.preview is not None and args.materialize is not None:
         try:
-            document = materialize_preview(args.registry, args.preview, args.materialize)
+            document = materialize_preview(registry, args.preview, args.materialize)
         except HubError as exc:
             print(f"fleet catalog: {exc}", file=sys.stderr)
             return 1
@@ -547,7 +560,7 @@ def _cmd_catalog(args: argparse.Namespace) -> int:
 
     if args.preview is not None:
         try:
-            refs = asset_preview(args.registry, args.preview, fmt=args.format)
+            refs = asset_preview(registry, args.preview, fmt=args.format)
         except HubError as exc:
             print(f"fleet catalog: {exc}", file=sys.stderr)
             return 1
@@ -578,7 +591,7 @@ def _cmd_catalog(args: argparse.Namespace) -> int:
 
     requires = [t for t in (args.requires or "").split(",") if t] or None
     try:
-        entries = list_menu(args.registry, requires=requires)
+        entries = list_menu(registry, requires=requires)
     except (HubError, CapabilityError) as exc:
         print(f"fleet catalog: {exc}", file=sys.stderr)
         return 1
