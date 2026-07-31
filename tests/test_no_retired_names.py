@@ -126,29 +126,16 @@ def test_a_scaffolded_package_names_nothing_retired(
     assert not _offences(hint), f"`plugin new {kind}` printed {_offences(hint)}"
 
 
-#: `astro-mine new world` writes bytes this repo does not own. Worlds' scaffold calls
+#: `astro-mine new world` writes bytes this repo does not own: Worlds' scaffold calls
 #: `astro_mine.worlds.spec.example_world_spec_text`, exactly as the thin-wrapper rule requires
-#: (`architecture/cli.md` §7: the template belongs to the format's owner, so the two cannot
-#: drift) -- and the shipped example still points at `astro-mine-worlds validate`, a binary
-#: consolidation deleted. It is one of ~29 such strings in the platform, filed as
-#: astro-mine/astro-mine-platform#6.
+#: (`architecture/cli.md` §7 -- the template belongs to the format's owner, so the two cannot
+#: drift). That is why `world` carried a strict xfail here: the shipped example pointed at
+#: `astro-mine-worlds validate`, a binary consolidation deleted, and this repo could not fix it.
 #:
-#: `strict=True` on purpose: when the platform lands its fix this test starts passing, the
-#: xfail turns into a failure, and whoever sees it deletes this block. A non-strict marker would
-#: let the exemption outlive the defect, which is how a temporary allowance becomes permanent.
-_PLATFORM_OWNED = {
-    "world": "template comes from astro_mine.worlds.spec (astro-mine-platform#6)",
-}
-
-_DOCUMENT_KINDS = [
-    pytest.param(
-        kind,
-        marks=pytest.mark.xfail(strict=True, reason=_PLATFORM_OWNED[kind]),
-    )
-    if kind in _PLATFORM_OWNED
-    else kind
-    for kind in sorted(DOCUMENT_KINDS)
-]
+#: astro-mine/astro-mine-platform#6 fixed it, the strict marker turned the pass into a failure,
+#: and this is that block being deleted -- which is the whole reason it was strict. Every
+#: document kind is now checked with no exemption.
+_DOCUMENT_KINDS = sorted(DOCUMENT_KINDS)
 
 
 @pytest.mark.parametrize("kind", _DOCUMENT_KINDS)

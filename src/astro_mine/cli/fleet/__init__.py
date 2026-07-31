@@ -436,6 +436,29 @@ def _cmd_resolve_family(args: argparse.Namespace) -> int:
     return 0
 
 
+def _open_registry(location: str, prog: str) -> object | None:
+    """Open ``location`` as a Hub registry, or report why and return ``None``.
+
+    `open_registry` dispatches on the string: a filesystem path gives the local OCI-layout store,
+    a registry URL like `ghcr.io/astro-mine` gives the remote OCI Distribution client. Choosing
+    between them is this command's call, which is why Fleet takes the opened registry rather than
+    a path (astro-mine-platform#5).
+
+    Opening is now *this* layer's job, so failing to open is this layer's error to report. It used
+    to happen inside `publish_asset`, under the command's own `except`, so `--registry` pointing at
+    a regular file surfaced as one line; hoisting the call out of that block turned the same
+    mistake into a traceback. `architecture/cli.md` §9 wants the one line, so the handling moves
+    with the call.
+    """
+    from astro_mine.hub.registry import open_registry
+
+    try:
+        return open_registry(location)
+    except OSError as exc:
+        print(f"{prog}: cannot open registry {location}: {exc.strerror or exc}", file=sys.stderr)
+        return None
+
+
 def _cmd_publish(args: argparse.Namespace) -> int:
     # Publishing is always signed: hub.md §9 defines no namespace tier for unsigned content, so
     # Hub's admission gate refuses it (astro-mine hub#32). `--sign` is therefore redundant on this
@@ -461,13 +484,10 @@ def _cmd_publish(args: argparse.Namespace) -> int:
 
     from astro_mine.fleet.capabilities import CapabilityError
     from astro_mine.fleet.packaging.hub import HubError, publish_asset, pull_asset
-    from astro_mine.hub.registry import open_registry
 
-    # `open_registry` dispatches on the string: a filesystem path → the local OCI-layout store,
-    # a registry URL like `ghcr.io/astro-mine` → the remote OCI Distribution client. Choosing
-    # between them is this command's call, which is why Fleet takes the opened registry rather
-    # than a path (astro-mine-platform#5).
-    registry = open_registry(args.registry)
+    registry = _open_registry(args.registry, "fleet publish")
+    if registry is None:
+        return 1
 
     try:
         pub = publish_asset(
@@ -526,7 +546,6 @@ def _cmd_catalog(args: argparse.Namespace) -> int:
     from astro_mine.fleet.capabilities import CapabilityError
     from astro_mine.fleet.catalog import asset_preview, list_menu, materialize_preview
     from astro_mine.fleet.packaging.hub import HubError
-    from astro_mine.hub.registry import open_registry
 
     if args.materialize is not None and args.preview is None:
         print("fleet catalog: --materialize requires --preview <reference>", file=sys.stderr)
@@ -535,7 +554,9 @@ def _cmd_catalog(args: argparse.Namespace) -> int:
     # Opened once for the whole command, and by this command rather than by Fleet: `list_menu`
     # used to build a concrete local `Registry` internally, so `--registry ghcr.io/astro-mine`
     # could not work at all. Injecting it fixes that as a side effect (astro-mine-platform#5).
-    registry = open_registry(args.registry)
+    registry = _open_registry(args.registry, "fleet catalog")
+    if registry is None:
+        return 1
 
     if args.preview is not None and args.materialize is not None:
         try:
