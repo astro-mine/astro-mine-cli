@@ -3,8 +3,8 @@
 Everything else in this suite injects entry points, which is fast and precise but shares one
 blind spot: it never exercises the packaging metadata that makes the whole mechanism work in the
 first place. So this module does it the long way — build the wheel, create an empty virtualenv,
-install the umbrella plus an unrelated third-party distribution, and drive the console script as
-a user would.
+install the umbrella plus the platform it requires and an unrelated third-party distribution, and
+drive the console script as a user would.
 
 Three claims live or die here:
 
@@ -28,26 +28,30 @@ import os
 import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
 
 # This lane builds a wheel and installs it into a throwaway venv -- the only place this
 # package's packaging metadata (the console script, and entry-point discovery *across*
-# distributions) is exercised for real. It now needs `astro-mine-platform` resolvable from
-# that venv, and the platform is a private distribution with no index: while the paired PRs
-# are open it exists only as a sibling checkout, and after they merge it becomes a git pin.
+# distributions) is exercised for real.
 #
-# Skipped rather than silently weakened. Adding `--no-deps` would let it pass while proving
-# something weaker than it claims, and not proving that is the one thing this lane is for.
+# It was skipped for a while on the grounds that it needed the platform "resolvable from a git
+# pin". That diagnosis was wrong, and the skip outlived the issue it named. The pin has been in
+# `[tool.uv.sources]` since consolidation; what actually breaks is narrower and does not go away
+# on its own: **`uv pip install` does not read `[tool.uv.sources]`**. That table is project
+# (workspace) configuration, and the wheel this lane builds carries only
+# `Requires-Dist: astro-mine-platform` -- metadata has nowhere to put a git URL. The platform is
+# private and on no index, so resolving the wheel's own dependency fails outright.
+#
+# So the venv is given the platform explicitly, from the very pin `pyproject.toml` declares
+# (`_platform_requirement`). That is not a weakening: it is what a user receives from an index
+# once the platform publishes, and it is read from the pin rather than duplicated, so the two
+# cannot drift. `--no-deps` *would* have been a weakening -- it would let this pass while proving
+# something less than it claims, and proving it is the one thing this lane is for.
 
-pytestmark = [
-    pytest.mark.integration,
-    pytest.mark.skip(
-        reason="needs astro-mine-platform installable in a throwaway venv; re-enable once "
-        "the platform is resolvable from a git pin (astro-mine-cli#12)"
-    ),
-]
+pytestmark = pytest.mark.integration
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PROVIDER = REPO_ROOT / "tests" / "fixtures" / "provider"
@@ -79,14 +83,32 @@ def wheel(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 @pytest.fixture(scope="module")
 def installed(tmp_path_factory: pytest.TempPathFactory, wheel: Path) -> Path:
-    """A throwaway venv holding exactly the umbrella and the fixture provider."""
+    """A throwaway venv holding the umbrella, the platform it requires, and the fixture provider."""
     venv = tmp_path_factory.mktemp("installed") / "venv"
+    _install(venv, str(wheel), str(PROVIDER))
+    return venv
+
+
+def _platform_requirement() -> str:
+    """The platform as an installable requirement, read from the pin this package already declares.
+
+    One pin, one place. Hard-coding the URL here would create a second copy that silently rots the
+    first time `[tool.uv.sources]` moves -- and it moves whenever the platform makes a breaking
+    change this package has to follow, which is exactly when a stale copy would resolve a platform
+    whose API no longer matches the wheel under test.
+    """
+    pin = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    source = pin["tool"]["uv"]["sources"]["astro-mine-platform"]
+    return f"astro-mine-platform @ git+{source['git']}@{source['rev']}"
+
+
+def _install(venv: Path, *packages: str) -> None:
+    """Create `venv` and install the platform plus `packages` into it, as a user's index would."""
     _run(["uv", "venv", str(venv)])
     _run(
-        ["uv", "pip", "install", str(wheel), str(PROVIDER)],
+        ["uv", "pip", "install", _platform_requirement(), *packages],
         env={**os.environ, "VIRTUAL_ENV": str(venv)},
     )
-    return venv
 
 
 def test_a_third_party_distribution_contributes_a_working_verb(installed: Path) -> None:
@@ -143,9 +165,21 @@ def test_python_m_is_equivalent_to_the_console_script(installed: Path) -> None:
     assert result.stdout.strip() == "hi"
 
 
-def test_the_umbrella_still_pulls_in_nothing(installed: Path) -> None:
-    """The venv holds the umbrella, the fixture provider, and nothing else — the zero-dependency
-    rule checked against a real resolver rather than against our own metadata."""
+def test_the_umbrella_pulls_in_the_platform_and_no_other_astro_mine_distribution(
+    installed: Path,
+) -> None:
+    """One wheel behind the umbrella, not eighteen — the consolidation rule, checked against a real
+    resolver rather than against our own metadata.
+
+    This assertion used to read `names == {"astro-mine-cli", "am-cli-test-provider"}`, from when
+    this package had no dependencies at all. Consolidation dissolved that premise deliberately
+    (`pyproject.toml` §dependencies): the platform is one wheel carrying every component, so
+    depending on it costs an install that already exists. What is still worth defending is the
+    *shape* — `astro-mine-cli` requires `astro-mine-platform` and nothing else of ours. A
+    resurrected `astro-mine-<component>` distribution arriving as a transitive dependency is the
+    regression the four-distribution rule exists to prevent (`conventions.md` §7.1), and it would
+    show up here first.
+    """
     uv = shutil.which("uv")
     assert uv is not None
     listing = _run(
@@ -153,7 +187,11 @@ def test_the_umbrella_still_pulls_in_nothing(installed: Path) -> None:
         env={**os.environ, "VIRTUAL_ENV": str(installed)},
     )
     names = {package["name"] for package in json.loads(listing.stdout)}
-    assert names == {"astro-mine-cli", "am-cli-test-provider"}
+    assert {name for name in names if name.startswith("astro-mine")} == {
+        "astro-mine-cli",
+        "astro-mine-platform",
+    }
+    assert "am-cli-test-provider" in names
 
 
 def test_a_third_party_distribution_contributes_a_scaffold_kind(
@@ -198,11 +236,7 @@ def test_a_scaffolded_verb_plugin_installs_registers_and_runs(
     assert scaffolded.returncode == 0, scaffolded.stderr
 
     venv = workspace / "venv"
-    _run(["uv", "venv", str(venv)])
-    _run(
-        ["uv", "pip", "install", str(wheel), str(package)],
-        env={**os.environ, "VIRTUAL_ENV": str(venv)},
-    )
+    _install(venv, str(wheel), str(package))
 
     ran = _cli(venv, "greet", "--name", "moon")
     assert ran.returncode == 0, ran.stderr

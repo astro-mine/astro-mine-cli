@@ -28,12 +28,29 @@ jobs:
           python-version: "3.12"
           enable-cache: true
 
-      # NOTE: every sibling repo has an "Authenticate to private dependencies" step here, which
-      # rewrites GitHub HTTPS fetches with $CORE_REPO_TOKEN so `uv sync` can resolve the private
-      # astro-mine-core git source. This repo deliberately has none: astro-mine-cli declares no
-      # runtime dependencies at all (RFC-0011 -- the local tier must stay light), so there is
-      # nothing private to resolve. Do not restore the step by copy-paste from a sibling; if it
-      # ever becomes necessary, the zero-dependency rule has already been broken upstream of it.
+      # This step used to be absent, with a note explaining that astro-mine-cli declares no runtime
+      # dependencies (RFC-0011) and so has nothing private to resolve. That note ended by saying:
+      # "if it ever becomes necessary, the zero-dependency rule has already been broken upstream of
+      # it." It was -- deliberately, by astro-mine-cli#12, which made `astro-mine-platform` this
+      # package's one dependency and recorded why in `pyproject.toml`. The step was never restored,
+      # so every run since has failed at `uv sync` with
+      #
+      #     fatal: could not read Username for 'https://github.com'
+      #
+      # ...meaning no lint, no type-check and no test has run in CI on this repository since
+      # 2026-07-30. The prediction was right; nobody was watching when it came true.
+      #
+      # NOTE: this needs the `CORE_REPO_TOKEN` secret set **on this repository** -- org-level
+      # secrets cannot be granted to private repos on the free plan, so it is per-repo and
+      # astro-mine-cli does not have it yet.
+      - name: Authenticate to private dependencies
+        env:
+          CORE_REPO_TOKEN: ${{ secrets.CORE_REPO_TOKEN }}
+        run: |
+          git config --global \
+            url."https://x-access-token:${CORE_REPO_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+
       - name: Sync dependencies
         run: uv sync --locked
 
