@@ -106,6 +106,23 @@ src = ["src", "tests"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+# E402 (import not at top of file) in the migrated command suites, and only there.
+#
+# Each of these came from astro-mine-platform, where it drove `astro-mine <component> <verb>`
+# directly. The migration put a shim above the original module -- a `main(argv)` that re-points at
+# this package's one executable -- specifically so the test bodies could arrive untouched, which is
+# what makes them evidence that the commands did not change. The original imports therefore sit
+# below a function definition.
+#
+# Ignored rather than fixed: hoisting 69 imports would edit the migrated bodies to satisfy a rule
+# about *this file's* layout, and the whole value of those bodies is that they were not edited. The
+# ignore is per-file, so a genuine E402 anywhere else still fails.
+#
+# This was invisible until CI could run again -- the lint step had not executed since 2026-07-30
+# (astro-mine-cli#30).
+"tests/*/test_cli*.py" = ["E402"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
