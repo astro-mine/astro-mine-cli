@@ -167,9 +167,7 @@ class _RunnerScaffold:
                 file=sys.stderr,
             )
             return _USAGE_ERROR
-        bad = check_plugin_name(
-            runner, command="runner", flag="--runner", noun="runner id"
-        )
+        bad = check_plugin_name(runner, command="runner", flag="--runner", noun="runner id")
         if bad is not None:
             print(bad, file=sys.stderr)
             return _USAGE_ERROR

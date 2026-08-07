@@ -28,8 +28,13 @@ from astro_mine.cli import main
 
 def _learn_args(**overrides: object) -> argparse.Namespace:
     base = dict(
-        config_json=None, seed=7, iterations=1, rollout_steps=8,
-        fidelity="sim_high", num_workers=1, hidden_sizes=None,
+        config_json=None,
+        seed=7,
+        iterations=1,
+        rollout_steps=8,
+        fidelity="sim_high",
+        num_workers=1,
+        hidden_sizes=None,
     )
     return argparse.Namespace(**{**base, **overrides})
 
@@ -73,8 +78,10 @@ def test_prospect_publish_mints_a_key_and_writes_the_public_half(tmp_path: Path)
     The offline tier-1 path: a local OCI-layout registry, no hosted Hub, no network.
     """
     registry, pub = tmp_path / "reg", tmp_path / "pub.pem"
-    assert main(["prospect", "publish", "--registry", str(registry),
-                 "--public-key-out", str(pub)]) == 0
+    assert (
+        main(["prospect", "publish", "--registry", str(registry), "--public-key-out", str(pub)])
+        == 0
+    )
     assert pub.exists() and b"PUBLIC KEY" in pub.read_bytes()
     assert (registry / "oci-layout").exists()
 
@@ -85,8 +92,12 @@ def test_prospect_publish_accepts_a_key_the_user_brought(tmp_path: Path) -> None
     private, _ = generate_keypair()
     key = tmp_path / "k.pem"
     key.write_bytes(private)
-    assert main(["prospect", "publish", "--registry", str(tmp_path / "reg"),
-                 "--private-key", str(key)]) == 0
+    assert (
+        main(
+            ["prospect", "publish", "--registry", str(tmp_path / "reg"), "--private-key", str(key)]
+        )
+        == 0
+    )
 
 
 # --- new / plugin new: the branches a happy path does not reach -----------------------------
@@ -237,5 +248,3 @@ def test_a_third_party_kind_shadowing_a_built_in_is_refused(
     monkeypatch.setattr("astro_mine.cli._new.discover_scaffolds", shadowed)
     assert main(["plugin", "new", "cli", str(tmp_path / "x")]) == 2
     assert "shadows" in capsys.readouterr().err
-
-

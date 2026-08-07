@@ -76,12 +76,30 @@ jobs:
       # wheel, install it into an environment containing nothing else, and run it. No source
       # checkout, no dev group, no siblings -- if `astro-mine` needs anything we did not declare,
       # it fails here.
+      # The wheel a user receives, installed and driven as a user drives it. This step carried the
+      # pre-consolidation zero-dependency rule in two places and failed on both:
+      #
+      #   * `uv pip install dist/*.whl` cannot resolve `astro-mine-platform`. `uv pip` does not read
+      #     `[tool.uv.sources]` -- that is project configuration, and a built wheel's metadata has
+      #     nowhere to put a git URL -- and the platform is private, on no index. So the platform is
+      #     installed first, from the very pin `pyproject.toml` declares, read from it rather than
+      #     copied so the two cannot drift. That is what a user gets from an index once it publishes.
+      #   * the final assertion required the venv to hold *only* `astro-mine-cli`. Consolidation
+      #     dissolved that deliberately (astro-mine-cli#12): the platform is one wheel carrying every
+      #     component, so depending on it costs an install that already exists. What is still worth
+      #     asserting is the shape -- this package requires the platform and nothing else of ours, so
+      #     a resurrected `astro-mine-<component>` distribution arriving transitively fails here
+      #     (conventions.md §7.1).
+      #
+      # `tests/test_installed_provider.py` makes the same two corrections for the same reasons.
       - name: Install the built wheel into a bare environment and run it
         run: |
           uv build --wheel
           uv venv /tmp/bare-venv
+          PLATFORM_PIN=$(python -c 'import tomllib; s = tomllib.load(open("pyproject.toml", "rb"))["tool"]["uv"]["sources"]["astro-mine-platform"]; print("astro-mine-platform @ git+" + s["git"] + "@" + s["rev"])')
+          VIRTUAL_ENV=/tmp/bare-venv uv pip install "$PLATFORM_PIN"
           VIRTUAL_ENV=/tmp/bare-venv uv pip install dist/*.whl
           /tmp/bare-venv/bin/astro-mine --version
           /tmp/bare-venv/bin/astro-mine --help
           test -z "$(VIRTUAL_ENV=/tmp/bare-venv uv pip list --format json \
-            | python -c 'import json,sys; print(" ".join(d["name"] for d in json.load(sys.stdin) if d["name"] != "astro-mine-cli"))')"
+            | python -c 'import json,sys; ours = {d["name"] for d in json.load(sys.stdin) if d["name"].startswith("astro-mine")}; print(" ".join(sorted(ours - {"astro-mine-cli", "astro-mine-platform"})))')"

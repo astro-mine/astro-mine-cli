@@ -61,9 +61,7 @@ def test_the_platform_declares_no_cli_entry_points() -> None:
         "astro_mine.cli.scaffolds",
         "astro_mine.cli.plugin_scaffolds",
     ):
-        providers = {
-            ep.dist.name for ep in entry_points(group=group) if ep.dist is not None
-        }
+        providers = {ep.dist.name for ep in entry_points(group=group) if ep.dist is not None}
         assert "astro-mine-platform" not in providers, (
             f"astro-mine-platform still registers into {group}"
         )

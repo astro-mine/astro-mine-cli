@@ -196,6 +196,14 @@ def test_bench_submit_without_a_target_is_a_clean_error(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Submission needs a live leaderboard; what is testable offline is the refusal."""
-    code = main(["bench", "submit", "--policy-ref", "nosuchmodule:policy",
-                 "--to", "http://127.0.0.1:1/none"])
+    code = main(
+        [
+            "bench",
+            "submit",
+            "--policy-ref",
+            "nosuchmodule:policy",
+            "--to",
+            "http://127.0.0.1:1/none",
+        ]
+    )
     _assert_clean_failure(code, capsys.readouterr().err)

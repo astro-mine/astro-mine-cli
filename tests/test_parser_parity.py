@@ -84,9 +84,7 @@ _OLD_EXTRA = re.compile(
 #: `astro-mine-hub keygen` -> `astro-mine hub keygen`, and nothing else. Not preceded by `/`
 #: so GitHub URLs survive; the alternation lists components, so `astro-mine-platform` and
 #: `astro-mine-cli` -- which are distributions, not commands -- survive too.
-_OLD_BINARY = re.compile(
-    r"(?<![/\w-])astro-mine-(" + "|".join(sorted(COMPONENTS)) + r")(?![\w-])"
-)
+_OLD_BINARY = re.compile(r"(?<![/\w-])astro-mine-(" + "|".join(sorted(COMPONENTS)) + r")(?![\w-])")
 
 
 def _readdress(value: Any) -> Any:

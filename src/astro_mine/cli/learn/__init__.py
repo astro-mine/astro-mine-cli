@@ -134,9 +134,7 @@ def add_train_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.description = (
-        __doc__
-    )
+    parser.description = __doc__
     add_train_arguments(parser)
 
 
@@ -188,6 +186,7 @@ def run_from_args(args: argparse.Namespace) -> int:  # pragma: no cover
         # leaderboard submission (conventions.md §5).
         print(f"exported {agent}: {digest} -> {onnx_path}", file=sys.stderr)
     return 0
+
 
 class _Command:
     """`astro-mine learn <verb>` — train a policy and export it."""

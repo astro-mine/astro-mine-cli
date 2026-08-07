@@ -297,9 +297,7 @@ def add_keygen_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.description = (
-        "Astro-Mine Hub client"
-    )
+    parser.description = "Astro-Mine Hub client"
     sub = parser.add_subparsers(dest="command", required=True)
 
     publish = sub.add_parser("publish", help="publish + sign an artifact")

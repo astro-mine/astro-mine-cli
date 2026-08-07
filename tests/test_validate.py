@@ -96,8 +96,6 @@ def test_two_claimants_is_a_hard_error(
     assert "Traceback" not in err
 
 
-
-
 def test_a_malformed_validator_is_reported_not_raised(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

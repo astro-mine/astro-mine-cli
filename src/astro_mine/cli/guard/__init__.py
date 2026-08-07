@@ -364,6 +364,7 @@ def _add_arguments(parser: argparse.ArgumentParser) -> None:
     )
     sign.set_defaults(func=_cmd_sign)
 
+
 class _Command:
     """`astro-mine guard <verb>` — author, compile and falsify SafetySpecs."""
 
@@ -378,8 +379,6 @@ class _Command:
 
 
 command = _Command()
-
-
 
 
 class _GuardValidator:

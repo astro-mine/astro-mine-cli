@@ -75,6 +75,10 @@ dev = [
   "pytest-cov>=5.0",
   "ruff>=0.6",
   "mypy>=1.11",
+  # `yaml` ships no inline types, and five command modules read authored documents with it. Without
+  # this, `mypy src` reports five import-untyped errors and checks nothing -- the same stubs
+  # astro-mine-platform's dev group already carries.
+  "types-pyyaml>=6.0",
   "pre-commit>=3.7",
   # A TEST dependency, not a runtime one, and the distinction is the whole reason it is here
   # rather than in `[project].dependencies` (which is enforced at exactly one entry by
@@ -106,12 +110,54 @@ src = ["src", "tests"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+# E402 (import not at top of file) in the migrated command suites, and only there.
+#
+# Each of these came from astro-mine-platform, where it drove `astro-mine <component> <verb>`
+# directly. The migration put a shim above the original module -- a `main(argv)` that re-points at
+# this package's one executable -- specifically so the test bodies could arrive untouched, which is
+# what makes them evidence that the commands did not change. The original imports therefore sit
+# below a function definition.
+#
+# Ignored rather than fixed: hoisting 69 imports would edit the migrated bodies to satisfy a rule
+# about *this file's* layout, and the whole value of those bodies is that they were not edited. The
+# ignore is per-file, so a genuine E402 anywhere else still fails.
+#
+# This was invisible until CI could run again -- the lint step had not executed since 2026-07-30
+# (astro-mine-cli#30).
+"tests/*/test_cli*.py" = ["E402"]
+
+[tool.ruff.format]
+# The same migrated suites, exempted from formatting for the same reason. `ruff format` would
+# rewrite 30 of them, and their value is precisely that they arrived from astro-mine-platform
+# unedited -- that is what makes them evidence the commands did not change across the move.
+# astro-mine-platform reached the same conclusion and dropped its format check entirely:
+# "the migrated sources are copied verbatim from repos that were not uniformly
+# ruff-format-normalized; reformatting is churn."
+#
+# This package keeps the check, because `src/` is *authored* here and that argument does not
+# cover it -- those 15 files are now formatted. The exclusion is stated here rather than as a
+# narrower path in CI, so `ruff format --check .` means the same thing on a laptop and on a runner.
+exclude = ["tests/*/test_cli*.py"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
 namespace_packages = true
 explicit_package_bases = true
 mypy_path = "src"
+
+[[tool.mypy.overrides]]
+# `mcap` is reachable through the platform's recording path. mypy resolves its `__init__.py` under
+# two module names at once and aborts the whole run with "Source file found twice" -- and because
+# that is a fatal error rather than a finding, it reported "errors prevented further checking" and
+# type-checked *nothing*. Five real errors were sitting behind it (astro-mine-cli#31).
+#
+# `follow_imports = skip` rather than `ignore_missing_imports`: the package is present and the
+# problem is how its module name is computed, not a missing stub. Nothing in `src/` imports it --
+# it arrives transitively -- so skipping costs no coverage of this package's own code.
+module = ["mcap.*"]
+follow_imports = "skip"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

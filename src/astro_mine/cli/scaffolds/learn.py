@@ -159,9 +159,7 @@ class _AlgorithmScaffold:
         target = Path(args.output)
         distribution = args.distribution or target.name
         module = args.module or re.sub(r"[-.]", "_", distribution)
-        bad = check_plugin_name(
-            args.tag, command="algorithm", flag="--tag", noun="algorithm id"
-        )
+        bad = check_plugin_name(args.tag, command="algorithm", flag="--tag", noun="algorithm id")
         if bad is not None:
             print(bad, file=sys.stderr)
             return _USAGE_ERROR
