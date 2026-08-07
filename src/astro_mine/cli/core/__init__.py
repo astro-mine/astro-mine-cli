@@ -68,36 +68,6 @@ __all__ = [
 # vocabularies — accepts any document at the top level, so it is not a standalone document format.
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # --------------------------------------------------------------------------- CLI
 
 
@@ -216,6 +186,7 @@ def _add_arguments(parser: argparse.ArgumentParser) -> None:
     kinds = sub.add_parser("kinds", help="list the known formats and their schema $ids")
     kinds.set_defaults(func=_cmd_kinds)
 
+
 class _Command:
     """`astro-mine core <verb>` — validate Core-authored formats; list them."""
 
@@ -230,8 +201,6 @@ class _Command:
 
 
 command = _Command()
-
-
 
 
 class _CoreValidator:

@@ -59,9 +59,7 @@ def test_verb_help_is_reachable_through_the_dispatcher(
 
 
 @pytest.mark.parametrize("component", sorted(COMPONENTS))
-def test_component_help_lists_its_verbs(
-    component: str, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_component_help_lists_its_verbs(component: str, capsys: pytest.CaptureFixture[str]) -> None:
     """`astro-mine <component> --help` reaches the component's own parser."""
     with pytest.raises(SystemExit) as caught:
         main([component, "--help"])

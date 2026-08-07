@@ -599,9 +599,7 @@ def add_submit_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.description = (
-        __doc__.splitlines()[0]
-    )
+    parser.description = __doc__.splitlines()[0]
     subcommands = parser.add_subparsers(dest="command", required=True)
 
     score = subcommands.add_parser("score", help="run the baseline on a scenario and score it")

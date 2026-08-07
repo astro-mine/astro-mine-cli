@@ -205,8 +205,6 @@ class _FieldModelScaffold:
 field_model_scaffold = _FieldModelScaffold()
 
 
-
-
 class _WorldScaffold:
     """`astro-mine new world <path>` — a WorldSpec that validates as written (RFC-0011 §7)."""
 

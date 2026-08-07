@@ -226,9 +226,7 @@ def add_record_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.description = (
-        __doc__.splitlines()[0] if __doc__ else None
-    )
+    parser.description = __doc__.splitlines()[0] if __doc__ else None
     subcommands = parser.add_subparsers(dest="command", required=True)
 
     run = subcommands.add_parser(

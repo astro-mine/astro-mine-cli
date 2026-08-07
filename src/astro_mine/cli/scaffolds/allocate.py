@@ -164,9 +164,7 @@ class _SolverScaffold:
                 file=sys.stderr,
             )
             return _USAGE_ERROR
-        bad = check_plugin_name(
-            args.backend, command="solver", flag="--backend", noun="solver id"
-        )
+        bad = check_plugin_name(args.backend, command="solver", flag="--backend", noun="solver id")
         if bad is not None:
             print(bad, file=sys.stderr)
             return _USAGE_ERROR

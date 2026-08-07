@@ -127,9 +127,7 @@ def _publish(args: argparse.Namespace) -> int:
 
 
 def _add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.description = (
-        "Astro-Mine Worlds toolchain."
-    )
+    parser.description = "Astro-Mine Worlds toolchain."
     parser.add_argument("--version", action="version", version=f"astro-mine worlds {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -157,6 +155,7 @@ def _add_arguments(parser: argparse.ArgumentParser) -> None:
     publish.add_argument("--version", default=None, help="Artifact version (default: spec ver).")
     publish.set_defaults(func=_publish)
 
+
 class _Command:
     """`astro-mine worlds <verb>` — author and publish world bundles."""
 
@@ -171,8 +170,6 @@ class _Command:
 
 
 command = _Command()
-
-
 
 
 #: The root properties ``WorldSpec`` declares with no default — the claim key for

@@ -46,6 +46,7 @@ def _novel_geometry_asset() -> SadfDocument:
     )
     return load_sadf(canonical_json(cp))
 
+
 def _publish_geometry_asset(registry, base_dir) -> str:
     """Publish a signed, geometry-bearing 'hopper' asset (real glTF + USD blobs); return its ref.
 

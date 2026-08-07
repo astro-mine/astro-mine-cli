@@ -52,8 +52,6 @@ def test_a_verbs_own_help_comes_from_the_provider(capsys, verbs) -> None:  # typ
     assert "--exit-code" in out
 
 
-
-
 def test_an_unknown_verb_lists_what_is_available(capsys, verbs) -> None:  # type: ignore[no-untyped-def]
     """Not in the manifest and not installed: this one really is a typo, and inventing an install
     suggestion would send the user to a package that does not exist."""
@@ -106,7 +104,3 @@ def test_top_level_help_lists_components_routers_and_third_party_verbs(capsys, v
     assert "provided by _verbs:ECHO" in out  # third-party: described from metadata
     assert "Components" in out and "Routers" in out
     assert "bench" in out and "fleet" in out
-
-
-
-

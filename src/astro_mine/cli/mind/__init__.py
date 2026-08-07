@@ -228,6 +228,7 @@ def _add_arguments(parser: argparse.ArgumentParser) -> None:
     stacks = sub.add_parser("stacks", help="list the reference stacks and manifests Mind ships")
     stacks.set_defaults(func=_cmd_stacks)
 
+
 class _Command:
     """`astro-mine mind <verb>` — validate and compose autonomy stacks."""
 
@@ -242,8 +243,6 @@ class _Command:
 
 
 command = _Command()
-
-
 
 
 class _MindValidator:

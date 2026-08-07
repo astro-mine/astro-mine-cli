@@ -84,9 +84,7 @@ def _cmd_serve(args: argparse.Namespace) -> int:
 
 
 def _add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.description = (
-        "Astro-Mine Studio — the design front door."
-    )
+    parser.description = "Astro-Mine Studio — the design front door."
     sub = parser.add_subparsers(dest="command", required=True)
 
     serve = sub.add_parser("serve", help="compose and serve a local Studio (backend + UI)")

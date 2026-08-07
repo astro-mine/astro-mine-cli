@@ -88,9 +88,7 @@ def _cmd_backends(_args: argparse.Namespace) -> int:
 
 
 def _add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.description = (
-        __doc__.splitlines()[0]
-    )
+    parser.description = __doc__.splitlines()[0]
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_submit = sub.add_parser("submit", help="submit a JobSpec through a backend")
@@ -124,6 +122,7 @@ def _add_arguments(parser: argparse.ArgumentParser) -> None:
 
     p_backends = sub.add_parser("backends", help="list registered backends")
     p_backends.set_defaults(func=_cmd_backends)
+
 
 class _Command:
     """`astro-mine cloud <verb>` — compile and submit cluster jobs."""

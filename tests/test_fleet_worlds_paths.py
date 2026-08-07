@@ -80,8 +80,17 @@ def test_worlds_publish_without_a_bundle_is_an_error_not_a_traceback(
     private, _ = generate_keypair()
     key = tmp_path / "k.pem"
     key.write_bytes(private)
-    code = main(["worlds", "publish", str(tmp_path / "absent"),
-                 "--registry", str(tmp_path / "r"), "--key", str(key)])
+    code = main(
+        [
+            "worlds",
+            "publish",
+            str(tmp_path / "absent"),
+            "--registry",
+            str(tmp_path / "r"),
+            "--key",
+            str(key),
+        ]
+    )
     assert code == 1
     err = capsys.readouterr().err
     assert "cannot read" in err
@@ -158,8 +167,9 @@ def test_fleet_import_reports_an_unreadable_source(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """`fleet import` on a URDF that is not there names the file, not a stack frame."""
-    code = main(["fleet", "import", str(tmp_path / "absent.urdf"),
-                 "-o", str(tmp_path / "out.sadf.json")])
+    code = main(
+        ["fleet", "import", str(tmp_path / "absent.urdf"), "-o", str(tmp_path / "out.sadf.json")]
+    )
     assert code != 0
     assert "Traceback" not in capsys.readouterr().err
 
@@ -167,8 +177,17 @@ def test_fleet_import_reports_an_unreadable_source(
 def test_fleet_export_reports_an_unreadable_source(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    code = main(["fleet", "export", str(tmp_path / "absent.yaml"), "--format", "urdf",
-                 "-o", str(tmp_path / "o.urdf")])
+    code = main(
+        [
+            "fleet",
+            "export",
+            str(tmp_path / "absent.yaml"),
+            "--format",
+            "urdf",
+            "-o",
+            str(tmp_path / "o.urdf"),
+        ]
+    )
     assert code != 0
     assert "Traceback" not in capsys.readouterr().err
 
@@ -202,8 +221,9 @@ def test_fleet_publish_round_trips_through_a_local_registry(
 ) -> None:
     """Publish, then verify what came back — the offline supply-chain path end to end."""
     registry = tmp_path / "reg"
-    code = main(["fleet", "publish", str(asset), "--registry", str(registry),
-                 "--key", str(signing_key)])
+    code = main(
+        ["fleet", "publish", str(asset), "--registry", str(registry), "--key", str(signing_key)]
+    )
     if code != 0:
         pytest.skip("publish needs packaging support not available in this environment")
     assert (registry / "oci-layout").exists()
@@ -215,8 +235,9 @@ def test_fleet_publish_to_an_unwritable_registry_is_a_clean_error(
     """A registry path that is a *file* cannot be opened as a store; say so, do not raise."""
     blocker = tmp_path / "not-a-dir"
     blocker.write_text("", encoding="utf-8")
-    code = main(["fleet", "publish", str(asset), "--registry", str(blocker),
-                 "--key", str(signing_key)])
+    code = main(
+        ["fleet", "publish", str(asset), "--registry", str(blocker), "--key", str(signing_key)]
+    )
     assert code != 0
     assert "Traceback" not in capsys.readouterr().err
 

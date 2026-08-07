@@ -145,8 +145,12 @@ def test_a_custom_distribution_and_module_reach_the_emitted_pyproject(
 ) -> None:
     """`--distribution` and `--module` are what the user will `pip install` and `import`."""
     out = tmp_path / "pkg"
-    assert main(["plugin", "new", kind, str(out),
-                 "--distribution", "my-thing", "--module", "my_thing"]) == 0
+    assert (
+        main(
+            ["plugin", "new", kind, str(out), "--distribution", "my-thing", "--module", "my_thing"]
+        )
+        == 0
+    )
     pyproject = (out / "pyproject.toml").read_text(encoding="utf-8")
     assert "my-thing" in pyproject
     assert "my_thing" in pyproject
