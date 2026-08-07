@@ -48,7 +48,12 @@ import os
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
+
+if TYPE_CHECKING:
+    # Type-only: erased at runtime, so `astro-mine --help` still imports no component. The Hub
+    # import that *does* run stays inside `_open_registry`.
+    from astro_mine.hub.registry import RegistryClient
 
 from astro_mine.core.registry import PluginManifest, PluginRegistry, RegistryError
 from astro_mine.core.sadf import SadfDocument, SadfError, load_sadf, validate_sadf
@@ -436,7 +441,7 @@ def _cmd_resolve_family(args: argparse.Namespace) -> int:
     return 0
 
 
-def _open_registry(location: str, prog: str) -> object | None:
+def _open_registry(location: str, prog: str) -> RegistryClient | None:
     """Open ``location`` as a Hub registry, or report why and return ``None``.
 
     `open_registry` dispatches on the string: a filesystem path gives the local OCI-layout store,
@@ -449,6 +454,12 @@ def _open_registry(location: str, prog: str) -> object | None:
     a regular file surfaced as one line; hoisting the call out of that block turned the same
     mistake into a traceback. `architecture/cli.md` §9 wants the one line, so the handling moves
     with the call.
+
+    The return type was ``object | None`` — the runtime import below must stay inside the function
+    (`astro-mine --help` imports no component, asserted by ``test_dispatch_all_verbs``), and naming
+    the real type looked like it required a module-level import. It does not: the ``TYPE_CHECKING``
+    import above is erased at runtime, so laziness is untouched and the five call sites below are
+    checked instead of waved through as ``object`` (astro-mine-cli#31).
     """
     from astro_mine.hub.registry import open_registry
 
@@ -515,9 +526,7 @@ def _cmd_publish(args: argparse.Namespace) -> int:
             )
             return 1
         require = None if pub.signed else ()
-        redoc = pull_asset(
-            registry, pub.digest, trusted_public_key_pem=trusted, require=require
-        )
+        redoc = pull_asset(registry, pub.digest, trusted_public_key_pem=trusted, require=require)
         if redoc.asset.identity.id != loaded.asset.identity.id:  # pragma: no cover - defensive
             print("fleet publish: round-trip identity mismatch", file=sys.stderr)
             return 1
@@ -764,9 +773,7 @@ def _add_json_flag(parser: argparse.ArgumentParser) -> None:
 
 
 def _add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.description = (
-        "Author, validate, lint, package, sign, and verify SADF assets."
-    )
+    parser.description = "Author, validate, lint, package, sign, and verify SADF assets."
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True, metavar="<command>")
 
@@ -943,6 +950,7 @@ def _add_arguments(parser: argparse.ArgumentParser) -> None:
         "use for the finest mesh)",
     )
     _add_json_flag(p_render)
+
 
 class _Command:
     """`astro-mine fleet <verb>` — author, package and publish SADF assets."""
