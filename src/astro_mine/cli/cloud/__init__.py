@@ -7,7 +7,7 @@ JSON files validated against the pydantic contracts. ``submit --input name=path`
 local file to a content hash at submit time and records it on the job -- the client's half of
 the content-addressing contract (``cloud.md`` §5).
 
-Backlog: RM-P1-CLOUD-02 -- https://github.com/astro-mine/astro-mine-cloud/issues/13
+Backlog: RM-P1-CLOUD-02 -- astro-mine-cloud#13
 """
 
 from __future__ import annotations
