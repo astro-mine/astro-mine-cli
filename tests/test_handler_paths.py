@@ -149,20 +149,39 @@ def test_studio_serve_says_where_the_rest_surface_lives(
 ) -> None:
     """The platform does not ship `astro_mine.studio.api`, so this reports rather than crashes.
 
-    The answer has to be *reachable*, which is one half of what was wrong: the message used to
-    end with `pip install astro-mine-studio[serve]`, a distribution the consolidation retired
-    (astro-mine-cli#19). It now names `astro-mine-api` and the roadmap item that stands it up,
-    and says outright that nothing installable exists yet — so the reader stops rather than
-    fighting pip. The negative assertion is the one that matters: an install hint is only worth
-    printing if it resolves.
+    `architecture/cli.md` §9 asks for two things — what is missing, **and how to get it** — and
+    this message has failed each half in turn. It once ended with `pip install
+    astro-mine-studio[serve]`, a distribution the consolidation retired, so the hint resolved to
+    nothing (astro-mine-cli#19). The fix said instead that the surface did not exist yet, which
+    was true until `astro-mine-api` shipped and then was not (astro-mine-cli#38).
+
+    That second failure is the subtle one, and it is what the assertions below are shaped
+    around. "There is nothing to install" stayed true the whole time — no distribution is on a
+    package index during incubation — so the *conclusion* never went stale and the false premise
+    above it rode along unnoticed. What actually broke was the second half of §9: a way to run
+    the surface now exists, and the message withheld it.
+
+    So the negatives keep guarding astro-mine-cli#19, and the positives require the two things a
+    blocked reader needs: where the surface really is, and a command that starts it.
     """
     assert main(["studio", "serve"]) != 0
     err = capsys.readouterr().err
     assert "astro_mine.studio.api" in err
     assert "astro-mine-api" in err
-    assert "RM-DIST-03" in err
+
+    # Where it actually lives, and how to run it. Naming the distribution is not enough on its
+    # own -- that was true of the message this replaced.
+    assert "astro_mine_api.studio" in err
+    assert "uvicorn --factory astro_mine_api._app:make_app" in err
+
+    # No install hint, because there is still no index to install from (astro-mine-cli#19).
     assert "astro-mine-studio[serve]" not in err
     assert "pip install" not in err
+
+    # No roadmap ID: RM-DIST-03 closed on 2026-08-08, and citing a finished item as the thing
+    # that unblocks you is the same defect this test exists to catch.
+    assert "RM-DIST-03" not in err
+    assert "not stood up" not in err
 
 
 def test_studio_serve_fails_rather_than_reporting_success(
