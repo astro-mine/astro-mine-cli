@@ -96,10 +96,22 @@ def _platform_requirement() -> str:
     first time `[tool.uv.sources]` moves -- and it moves whenever the platform makes a breaking
     change this package has to follow, which is exactly when a stale copy would resolve a platform
     whose API no longer matches the wheel under test.
+
+    The *ref* is read generically rather than as ``source["rev"]``. That literal was the one thing
+    here still coupled to the pin's shape, and it did rot: astro-mine-cli#36 moved the pin from a
+    rev to ``branch = "main"`` and this helper raised ``KeyError: 'rev'`` in eleven tests -- the
+    rot its own docstring warns about, one field lower down. A pin is a git source with *some* ref,
+    and which kind is not this helper's business.
     """
     pin = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     source = pin["tool"]["uv"]["sources"]["astro-mine-platform"]
-    return f"astro-mine-platform @ git+{source['git']}@{source['rev']}"
+    ref = next((source[key] for key in ("rev", "tag", "branch") if key in source), None)
+    if ref is None:
+        raise AssertionError(
+            f"the platform pin declares no rev/tag/branch: {source!r}. This helper installs the "
+            f"platform the package pins, so it needs a ref to install."
+        )
+    return f"astro-mine-platform @ git+{source['git']}@{ref}"
 
 
 def _install(venv: Path, *packages: str) -> None:

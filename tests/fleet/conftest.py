@@ -11,7 +11,7 @@ VALID_SADF = """\
 sadf_version: "0.1"
 asset:
   identity:
-    id: test.rover
+    id: test-rover
     name: Test Rover
     version: "0.1.0"
     kind: rover

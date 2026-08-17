@@ -225,7 +225,7 @@ def _minimal_sadf() -> dict[str, object]:
         "sadf_version": "0.1",
         "asset": {
             "identity": {
-                "id": "example.rover",
+                "id": "example-rover",
                 "name": "Example Rover",
                 "version": "0.1.0",
                 "kind": "rover",

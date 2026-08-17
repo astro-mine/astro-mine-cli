@@ -1068,7 +1068,7 @@
             "const": null,
             "default": "None",
             "dest": "id",
-            "help": "asset identity id (default: example.<kind>)",
+            "help": "asset identity id (default: example-<kind>)",
             "metavar": null,
             "nargs": null,
             "option_strings": [

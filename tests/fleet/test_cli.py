@@ -74,7 +74,7 @@ def test_new_honors_id_name_and_version(tmp_path: Path) -> None:
             "orbiter",
             str(out),
             "--id",
-            "relay.sat",
+            "relay-sat",
             "--name",
             "Relay",
             "--asset-version",
@@ -83,7 +83,27 @@ def test_new_honors_id_name_and_version(tmp_path: Path) -> None:
         == 0
     )
     text = out.read_text(encoding="utf-8")
-    assert "relay.sat" in text and "Relay" in text and "2.0.0" in text
+    assert "relay-sat" in text and "Relay" in text and "2.0.0" in text
+
+
+def test_new_refuses_an_id_that_could_never_be_published(tmp_path: Path) -> None:
+    """A scaffolded `identity.id` *is* the registry name, so it is checked where it is chosen.
+
+    This test used to be the one above, passing `--id relay.sat` and asserting exit 0 — which
+    asserted that the command happily writes an asset that `fleet publish` will refuse
+    (`conventions.md` §13, enforced at `HubClient.publish` since astro-mine-platform#34). The
+    dotted form is the failure now, and the message carries the correction.
+    """
+    out = tmp_path / "a.yaml"
+    assert run("new", "orbiter", str(out), "--id", "relay.sat") == 1
+    assert not out.exists(), "a refused id must not leave a half-written scaffold behind"
+
+
+def test_new_scaffolds_a_conforming_id_from_the_kind(tmp_path: Path) -> None:
+    """The default is conformant, including when the kind carries an underscore."""
+    out = tmp_path / "a.yaml"
+    assert run("new", "mass_model", str(out)) == 0
+    assert 'id: "example-mass-model"' in out.read_text(encoding="utf-8")
 
 
 def test_new_refuses_to_overwrite_without_force(valid_file: Path) -> None:
@@ -92,7 +112,7 @@ def test_new_refuses_to_overwrite_without_force(valid_file: Path) -> None:
 
 def test_new_force_overwrites(valid_file: Path) -> None:
     assert run("new", "rover", str(valid_file), "--force") == 0
-    assert "example.rover" in valid_file.read_text(encoding="utf-8")
+    assert "example-rover" in valid_file.read_text(encoding="utf-8")
 
 
 def test_new_creates_parent_directories(tmp_path: Path) -> None:
@@ -144,7 +164,7 @@ def test_validate_missing_file(tmp_path: Path, capsys: pytest.CaptureFixture[str
 def test_lint_passes_multiple(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     a, b = tmp_path / "a.yaml", tmp_path / "b.yaml"
     a.write_text(VALID_SADF, encoding="utf-8")
-    b.write_text(VALID_SADF.replace("test.rover", "test.hauler"), encoding="utf-8")
+    b.write_text(VALID_SADF.replace("test-rover", "test-hauler"), encoding="utf-8")
     assert run("lint", str(a), str(b)) == 0
     assert "2 file(s) passed" in capsys.readouterr().out
 
@@ -170,7 +190,7 @@ def test_lint_json_aggregates(tmp_path: Path, capsys: pytest.CaptureFixture[str]
 def test_resolve_to_stdout(valid_file: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert run("resolve", str(valid_file)) == 0
     out = capsys.readouterr().out
-    assert json.loads(out)["asset"]["identity"]["id"] == "test.rover"
+    assert json.loads(out)["asset"]["identity"]["id"] == "test-rover"
 
 
 def test_resolve_to_file(valid_file: Path, tmp_path: Path) -> None:
@@ -237,7 +257,7 @@ def test_export_writes_a_description(
     out = tmp_path / f"out/rover.{fmt}"
     assert run("export", str(rover_file), "-o", str(out), "--format", fmt) == 0
     assert out.is_file() and out.stat().st_size > 0
-    assert "exported astro-mine.fleet.prospecting-rover" in capsys.readouterr().out
+    assert "exported prospecting-rover" in capsys.readouterr().out
 
 
 def test_export_reports_its_losses_as_json(
@@ -248,7 +268,7 @@ def test_export_reports_its_losses_as_json(
     assert run("export", str(rover_file), "-o", str(out), "--json") == 0
 
     payload = json.loads(capsys.readouterr().out)
-    assert payload["asset"] == "astro-mine.fleet.prospecting-rover"
+    assert payload["asset"] == "prospecting-rover"
     assert payload["path"] == str(out)
     rules = {loss["rule"] for loss in payload["losses"]}
     assert "asset.block_dropped" in rules  # the power/thermal/sensor blocks URDF cannot hold
@@ -307,7 +327,7 @@ def test_render_writes_a_preview(
     out = tmp_path / f"preview.{fmt}"
     assert run("render", str(rover_file), "-o", str(out), "--format", fmt) == 0
     assert out.is_file() and out.stat().st_size > 0
-    assert "rendered astro-mine.fleet.prospecting-rover" in capsys.readouterr().out
+    assert "rendered prospecting-rover" in capsys.readouterr().out
 
 
 def test_render_reports_the_proxy_substitution(
