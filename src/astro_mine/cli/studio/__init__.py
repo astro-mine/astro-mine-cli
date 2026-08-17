@@ -4,9 +4,11 @@
 app from :func:`astro_mine.studio.api.create_app`, and the Studio REST surface is deliberately
 not part of `astro-mine-platform` (the platform's `docs/CONSOLIDATION_PLAN.md` §"Not migrated";
 `architecture/api.md`). So the verb exists, its flags are the real ones, and running it reports
-where the surface lives. It does **not** report what to install, because as of `astro-mine-api`
-not being stood up (roadmap `RM-DIST-03`) there is nothing installable to name — and naming a
-distribution that does not resolve is the defect this message was fixed for (astro-mine-cli#19).
+where the surface lives — which is `astro-mine-api`, where it is built and running as
+`astro_mine_api.studio`. It does **not** report what to *install*, because no distribution is
+published to a package index during incubation; naming one that does not resolve is the defect
+this message was fixed for (astro-mine-cli#19). It reports how to *run* it instead, which is a
+different thing and is the half `architecture/cli.md` §9 requires.
 
 The group is kept rather than dropped because the error message *is* the useful behaviour:
 removing `studio` would make `astro-mine --help` claim the platform has less than it does, and
@@ -44,16 +46,31 @@ DEFAULT_SIGNING_KEY_NAMES = ("cosign.key", "anchor-dev.key.pem")
 # install hint that resolves to nothing is worse than no hint: it sends the reader to pip, which
 # reports "no matching distribution" and leaves them believing their environment is broken.
 #
-# The honest answer names the distribution that *will* own the surface and admits it does not
-# exist yet, so a reader stops looking rather than searching for a package to install. When
-# `astro-mine-api` ships (roadmap RM-DIST-03), this becomes `pip install astro-mine-api` and the
-# second paragraph goes away.
+# The honest answer names the distribution that owns the surface and how to reach it. It used to
+# say the surface did not exist yet, so a reader would stop looking -- correct while that was
+# true, and the whole message when it stopped being true. This comment predicted its own fix:
+# "when astro-mine-api ships (RM-DIST-03), this becomes `pip install astro-mine-api`". Both
+# halves were wrong. The API shipped -- RM-DIST-03 closed 2026-08-08 and the surface runs as
+# `astro_mine_api.studio` -- and `pip install astro-mine-api` still resolves to nothing, because
+# nothing is published to an index during incubation.
+#
+# So the conclusion survived its own premise, and that is the trap: "there is nothing to install"
+# stayed true for a different reason, which made the sentence above it look true too. What broke
+# was the *other* half of `architecture/cli.md` §9 -- report what is missing **and how to get
+# it**. There is now a way to get it, and a message that withholds it is no longer honest
+# degradation, it is just a refusal (astro-mine-cli#38).
+#
+# No roadmap ID here. RM-DIST-03 is closed; pointing a blocked reader at a finished item is the
+# same defect wearing different clothes.
 _UNAVAILABLE = (
     "astro-mine studio serve needs the Studio REST surface (astro_mine.studio.api), which is "
     "not included in astro-mine-platform.\n"
-    "  The REST tier ships in astro-mine-api (docs: architecture/api.md), which is not stood up "
-    "yet — roadmap RM-DIST-03.\n"
-    "  No released distribution provides it today, so there is nothing to install."
+    "  It is built, and ships in astro-mine-api as astro_mine_api.studio "
+    "(docs: architecture/api.md).\n"
+    "  No distribution is published to a package index during incubation, so there is nothing "
+    "to install.\n"
+    "  Run it from a clone of astro-mine-api:\n"
+    "    uv run uvicorn --factory astro_mine_api._app:make_app"
 )
 
 
