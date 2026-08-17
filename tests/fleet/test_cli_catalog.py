@@ -63,8 +63,8 @@ def test_catalog_json_lists_published_assets(
     # Read each asset's version off the document rather than restating it: the catalog's job is to
     # echo back the `id:version` it was published under, and hard-coding the version here would
     # turn every legitimate asset revision into a catalog-test failure.
-    orbiter_ref = f"astro-mine.fleet.relay-orbiter:{orbiter.asset.identity.version}"
-    excavator_ref = f"astro-mine.fleet.excavator:{excavator.asset.identity.version}"
+    orbiter_ref = f"relay-orbiter:{orbiter.asset.identity.version}"
+    excavator_ref = f"excavator:{excavator.asset.identity.version}"
     assert set(by_ref) == {orbiter_ref, excavator_ref}
     assert by_ref[orbiter_ref]["kind"] == "orbiter"
     assert "comms.relay" in by_ref[orbiter_ref]["capability_tags"]
@@ -102,7 +102,7 @@ def test_catalog_preview_resolves_geometry_by_format(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     reg = _signed_registry(tmp_path, [_novel_geometry_asset()])
-    ref = "example.hopper-mk1:0.1.0"
+    ref = "hopper-mk1:0.1.0"
 
     assert run("catalog", "--registry", str(reg), "--preview", ref, "--json") == 0
     gltf = json.loads(capsys.readouterr().out)
@@ -119,7 +119,7 @@ def test_catalog_preview_of_mass_model_reports_no_geometry(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     reg = _signed_registry(tmp_path, [load_reference("relay_orbiter")])
-    ref = "astro-mine.fleet.relay-orbiter:0.1.0"
+    ref = "relay-orbiter:0.1.0"
     assert run("catalog", "--registry", str(reg), "--preview", ref) == 0
     assert "no preview geometry" in capsys.readouterr().out
 

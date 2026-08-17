@@ -52,22 +52,26 @@ Documentation = "https://github.com/astro-mine/docs"
 Issues = "https://github.com/astro-mine/astro-mine-cli/issues"
 
 [tool.uv.sources]
-# Pinned to the commit that removed the platform's CLI surface (astro-mine-platform#1). A
-# **rev**, not a branch: `uv.lock` records the resolved commit either way, but a rev makes the
-# pin readable without opening the lock, and the platform publishes no tags yet.
+# `branch = "main"`, NOT a rev -- `conventions.md` §3.1 is normative: "the CLI, API, and front-end
+# builds MUST run against the platform at HEAD, not against a released pin. A downstream job that
+# resolves its dependency from an old release cannot fail for any change, which makes a green board
+# actively misleading rather than merely uninformative."
 #
-# This must not float. The two repos are one change split in half -- the platform stops
-# shipping `astro_mine/cli/`, this package starts providing it -- so a pin that moved could
-# resolve a platform that still installs files at this package's import path.
+# That was not a hypothetical here. The rev this replaced was twenty commits stale, and moving to
+# HEAD turned 576 green tests into 14 failures and 11 errors -- the artifact-name migration
+# (astro-mine-platform#34) and the publish gate it moved to `HubClient.publish` had broken this
+# package on the day they landed, and the pin resolved a commit from before them, so CI stayed
+# green through all of it. Fixed in the same change that unpins (astro-mine-cli#36).
 #
-# Moved for astro-mine-platform#5, which is the same situation a second time: the platform moved
-# four shared contracts to Core as a clean break and made Hub an injected collaborator, and this
-# package is the caller that has to hand the registry in. The old rev resolves a platform where
-# `publish_prior` still takes `registry_path` and `TierPlugin` still lives in Mind, so it cannot
-# stay.
+# **The rev was right when it was written, and the reason expired.** `VERSIONING.md` §2.1 defended
+# it because "the two repositories were one change split in half and a floating pin could resolve a
+# platform that still installs files at the CLI's import path". That hazard ended when the platform
+# shipped zero console scripts; the split is complete and cannot half-resolve any more.
 #
-# This is astro-mine-platform#7's squash commit on `main` -- the merge that moved those contracts.
-astro-mine-platform = { git = "https://github.com/astro-mine/astro-mine-platform.git", rev = "72e139f5cb37e4df0e97fd7ba241e49f79867320" }
+# A tag is now available (`v0.1.0`, the platform's first) and is deliberately *not* used here. A tag
+# is the right pin for a release, and the wrong one for CI: it is a released pin, which is the exact
+# thing §3.1 forbids for this build. The sibling `astro-mine-api` reached the same conclusion first.
+astro-mine-platform = { git = "https://github.com/astro-mine/astro-mine-platform.git", branch = "main" }
 
 [dependency-groups]
 dev = [

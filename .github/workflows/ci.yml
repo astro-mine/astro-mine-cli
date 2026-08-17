@@ -4,6 +4,22 @@ on:
   push:
     branches: [main]
   pull_request:
+  # The canary has to *run* to be a canary. `conventions.md` §3.1 makes this build the platform's
+  # downstream check, and the floating `branch = "main"` pin (see `pyproject.toml`) is what makes
+  # that possible -- it is not what makes it happen: nothing here reacts to a platform push.
+  #
+  # The cost of that gap is measured, not hypothetical. The rev this repository pinned until
+  # astro-mine-cli#36 was twenty commits stale, and the artifact-name migration had broken fourteen
+  # tests here on the day it landed without turning anything red. `astro-mine-api` hit the identical
+  # problem first (a break that surfaced two days late, on an unrelated PR) and answered it with a
+  # daily schedule; this is that answer, deliberately the same shape rather than a second one.
+  #
+  # A red scheduled build attributes correctly: nothing changed here, so it points at the platform.
+  # A `repository_dispatch` from the platform's `main` would be tighter, but needs a cross-repo
+  # *write* token, and `CORE_REPO_TOKEN` is a read credential.
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -41,8 +57,14 @@ jobs:
       # 2026-07-30. The prediction was right; nobody was watching when it came true.
       #
       # NOTE: this needs the `CORE_REPO_TOKEN` secret set **on this repository** -- org-level
-      # secrets cannot be granted to private repos on the free plan, so it is per-repo and
-      # astro-mine-cli does not have it yet.
+      # secrets cannot be granted to private repos on the free plan, so it is per-repo. It **is**
+      # set here (added 2026-08-07); the clause that used to say otherwise outlived the fix and was
+      # the kind of note that sends the next reader to add a secret that already exists.
+      #
+      # The missing auth step above is fixed and is no longer why nothing runs. The current reason
+      # is that the org is out of Actions minutes (astro-mine/.github#8, resets 2026-09-01), which
+      # is tracked there rather than here -- said so a reader does not re-diagnose a solved problem.
+      # This repository has still never had a green run; astro-mine-cli#35 records that.
       - name: Authenticate to private dependencies
         env:
           CORE_REPO_TOKEN: ${{ secrets.CORE_REPO_TOKEN }}

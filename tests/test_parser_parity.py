@@ -39,6 +39,14 @@ Regenerating the fixture to make this pass is not a fix -- the fixture is the ol
 and the old behaviour is the requirement. If a verb genuinely must change, that is a separate
 change with its own justification, and the fixture moves in *that* commit.
 
+**One verb has genuinely changed, and the fixture moved with it** (astro-mine-cli#35/#36). `fleet
+new` defaulted its scaffolded `--id` to `example.<kind>`, and a SADF `identity.id` *is* the
+artifact's registry name at publish -- so every asset this command scaffolded was born violating
+`conventions.md` §13 and unable to publish. The default is now `example-<kind>` and the help string
+says so. This is not a re-addressing, so it is not a :func:`_readdress` rule: it is a behaviour
+change, the fixture records the new behaviour, and this paragraph is the justification the note
+above asks for. It is the first substantive divergence from the platform's parsers since the move.
+
 **Components added after the move are excluded, by name.** A fixture recording what the platform's
 binaries declared cannot record a group that never was one, and back-filling it would turn the
 contract into a mirror of the current code -- which is the failure mode this whole file exists to

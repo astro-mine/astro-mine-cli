@@ -33,7 +33,7 @@ from astro_mine.core.registry import PluginKind, PluginManifest
 from astro_mine.hub.client import HubClient
 from astro_mine.hub.registry import Registry
 
-_NAME = "astro-mine.link.cli-test"
+_NAME = "cli-test"
 _VERSION = "0.1.0"
 _SCENARIO = "cli-test-scenario"
 

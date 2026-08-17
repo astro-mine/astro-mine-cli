@@ -25,7 +25,7 @@ def _novel_geometry_asset() -> SadfDocument:
     the no-code-change discovery path.
     """
     cp = load_reference("relay_orbiter").model_copy(deep=True)
-    cp.asset.identity.id = "example.hopper-mk1"
+    cp.asset.identity.id = "hopper-mk1"
     cp.asset.identity.name = "Hopper Mk1"
     cp.asset.identity.kind = "hopper"
     cp.asset.geometry.append(
@@ -58,7 +58,7 @@ def _publish_geometry_asset(registry, base_dir) -> str:
     (base_dir / "geometry" / "hopper.glb").write_bytes(b"GLB-BYTES-123")
     (base_dir / "geometry" / "hopper.usda").write_bytes(b"USDA-BYTES-123")
     cp = load_reference("relay_orbiter").model_copy(deep=True)
-    cp.asset.identity.id = "example.hopper-mk1"
+    cp.asset.identity.id = "hopper-mk1"
     cp.asset.identity.name = "Hopper Mk1"
     cp.asset.identity.kind = "hopper"
     for fmt, uri in (
@@ -75,4 +75,4 @@ def _publish_geometry_asset(registry, base_dir) -> str:
         sign_key=private_pem,
         base_dir=base_dir,
     )
-    return "example.hopper-mk1:0.1.0"
+    return "hopper-mk1:0.1.0"

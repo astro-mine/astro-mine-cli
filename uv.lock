@@ -115,7 +115,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "astro-mine-platform", git = "https://github.com/astro-mine/astro-mine-platform.git?rev=72e139f5cb37e4df0e97fd7ba241e49f79867320" }]
+requires-dist = [{ name = "astro-mine-platform", git = "https://github.com/astro-mine/astro-mine-platform.git?branch=main" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -131,7 +131,7 @@ dev = [
 [[package]]
 name = "astro-mine-platform"
 version = "0.1.0"
-source = { git = "https://github.com/astro-mine/astro-mine-platform.git?rev=72e139f5cb37e4df0e97fd7ba241e49f79867320#72e139f5cb37e4df0e97fd7ba241e49f79867320" }
+source = { git = "https://github.com/astro-mine/astro-mine-platform.git?branch=main#51bbc62a13896717a87bc47f505335ed0ab6526b" }
 dependencies = [
     { name = "cryptography" },
     { name = "gpytorch" },

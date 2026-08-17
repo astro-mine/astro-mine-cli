@@ -75,7 +75,7 @@ def test_families_json_carries_parameter_ranges(capsys: pytest.CaptureFixture[st
 
 def test_resolve_family_to_stdout(capsys: pytest.CaptureFixture[str]) -> None:
     assert run("resolve-family", "surface-rover", "--set", "chassis_mass_kg=250") == 0
-    assert "astro-mine.fleet.surface-rover" in capsys.readouterr().out
+    assert "surface-rover" in capsys.readouterr().out
 
 
 def test_resolve_family_to_file_is_valid_sadf(tmp_path: Path) -> None:
@@ -131,7 +131,7 @@ def test_publish_signed_with_roundtrip_verification(
     payload = json.loads(capsys.readouterr().out)
     assert payload["signed"] is True
     assert payload["digest"].startswith("sha256:")
-    assert payload["reference"] == "test.rover:0.1.0"
+    assert payload["reference"] == "test-rover:0.1.0"
 
 
 def test_publish_without_a_key_is_refused(

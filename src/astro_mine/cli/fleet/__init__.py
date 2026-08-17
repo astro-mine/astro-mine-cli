@@ -71,6 +71,7 @@ from astro_mine.fleet.geometry import GeometryError
 from astro_mine.fleet.lint import lint_asset
 from astro_mine.fleet.packaging import oci, package_asset, package_oci
 from astro_mine.fleet.packaging.verifier import make_verifier
+from astro_mine.hub.registry import InvalidArtifactName, validate_artifact_name
 from astro_mine.seal import SignatureError
 
 __all__ = ["main"]
@@ -151,7 +152,20 @@ asset:
 
 
 def _cmd_new(args: argparse.Namespace) -> int:
-    asset_id = args.id or f"example.{args.kind}"
+    # `example-<kind>`, not `example.<kind>`. A SADF `identity.id` *is* the artifact's registry
+    # name at publish (`publish_asset` passes `name=identity.id`), so the scaffolded default has to
+    # satisfy `conventions.md` §13 -- and `example.rover` does not. Every asset scaffolded by this
+    # command was born unable to publish; the gate that now refuses it lives at
+    # `HubClient.publish` (astro-mine-platform#34), and before that gate existed nothing said so.
+    asset_id = args.id or f"example-{args.kind.strip().lower().replace('_', '-')}"
+    # Validated here rather than left to fail at `fleet publish`, because the correction belongs at
+    # the point the name is chosen. A user-supplied `--id` goes through the same check: it is the
+    # same name, and refusing it later is refusing it in a worse place.
+    try:
+        validate_artifact_name(asset_id)
+    except InvalidArtifactName as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     name = args.name or f"Example {args.kind.replace('_', ' ').title()}"
     text = _scaffold(asset_id, name, args.asset_version, args.kind)
     # The scaffold must always be valid; fail loud if a future edit breaks that.
@@ -780,7 +794,7 @@ def _add_arguments(parser: argparse.ArgumentParser) -> None:
     p_new = sub.add_parser("new", help="scaffold a minimal, valid SADF asset")
     p_new.add_argument("kind", help="asset kind label (e.g. rover, orbiter, excavator)")
     p_new.add_argument("output", help="path to write the scaffold to")
-    p_new.add_argument("--id", help="asset identity id (default: example.<kind>)")
+    p_new.add_argument("--id", help="asset identity id (default: example-<kind>)")
     p_new.add_argument("--name", help="asset display name")
     p_new.add_argument("--asset-version", default="0.1.0", help="asset version (default: 0.1.0)")
     p_new.add_argument("--force", action="store_true", help="overwrite an existing file")
