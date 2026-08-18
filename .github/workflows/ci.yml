@@ -103,9 +103,15 @@ jobs:
       #
       #   * `uv pip install dist/*.whl` cannot resolve `astro-mine-platform`. `uv pip` does not read
       #     `[tool.uv.sources]` -- that is project configuration, and a built wheel's metadata has
-      #     nowhere to put a git URL -- and the platform is private, on no index. So the platform is
-      #     installed first, from the very pin `pyproject.toml` declares, read from it rather than
-      #     copied so the two cannot drift. That is what a user gets from an index once it publishes.
+      #     nowhere to put a git URL -- and the platform is on no index. So the platform is installed
+      #     first, from the very pin `pyproject.toml` declares, read from it rather than copied so
+      #     the two cannot drift. That is what a user gets from an index once it publishes.
+      #
+      #     That reading was a `python -c` one-liner here and it drifted anyway: it hard-coded the
+      #     `rev` key, astro-mine-cli#36 replaced `rev` with `branch = "main"`, and this step died on
+      #     `KeyError: 'rev'` -- unseen, because Actions was billing-blocked and then the test lane
+      #     failed first. It is `scripts/platform_pin.py` now, which `tests/test_packaging.py` calls
+      #     too, so the pin and the thing that installs it are checked together in the test lane.
       #   * the final assertion required the venv to hold *only* `astro-mine-cli`. Consolidation
       #     dissolved that deliberately (astro-mine-cli#12): the platform is one wheel carrying every
       #     component, so depending on it costs an install that already exists. What is still worth
@@ -118,7 +124,7 @@ jobs:
         run: |
           uv build --wheel
           uv venv /tmp/bare-venv
-          PLATFORM_PIN=$(python -c 'import tomllib; s = tomllib.load(open("pyproject.toml", "rb"))["tool"]["uv"]["sources"]["astro-mine-platform"]; print("astro-mine-platform @ git+" + s["git"] + "@" + s["rev"])')
+          PLATFORM_PIN=$(python scripts/platform_pin.py)
           VIRTUAL_ENV=/tmp/bare-venv uv pip install "$PLATFORM_PIN"
           VIRTUAL_ENV=/tmp/bare-venv uv pip install dist/*.whl
           /tmp/bare-venv/bin/astro-mine --version
