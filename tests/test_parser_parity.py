@@ -17,7 +17,7 @@ does it.
 `__doc__.splitlines()[0]` of a module whose docstring this change rewrites). Everything a user
 types, and every string that tells them what to type, is compared exactly.
 
-**Two normalizations, applied to both sides.**
+**Three normalizations, applied to both sides.**
 
 1. *Binaries.* 109 help strings named a binary this change deletes -- *"Mint one with
    `astro-mine-hub keygen`"*. Leaving them would ship instructions to run a command that no
@@ -34,6 +34,13 @@ types, and every string that tells them what to type, is compared exactly.
    `<component>-<extra>` namespace, so the honest target is `astro-mine-platform[sim-bench]`.
    :func:`_readdress` maps the fixture's `astro-mine-<component>[<extra>]` onto that form, and
    runs **before** the binary rewrite so the latter never sees an extra again.
+
+3. *The resolved content store.* `bench fetch --registry` renders its default by resolving it
+   against the running user's home, so the help string reads `/home/djankov/...` on one machine and
+   `/home/runner/...` on CI -- a difference in *where the test ran*, not in what the command does.
+   :func:`_despecialize` collapses the resolved path to a token on both sides. It is a
+   normalization rather than a fixture edit because the command did not change: resolving the
+   default is what makes the help useful, and the fixture recorded a resolution, not a decision.
 
 Regenerating the fixture to make this pass is not a fix -- the fixture is the old behaviour,
 and the old behaviour is the requirement. If a verb genuinely must change, that is a separate
@@ -94,6 +101,27 @@ _OLD_EXTRA = re.compile(
 #: `astro-mine-cli` -- which are distributions, not commands -- survive too.
 _OLD_BINARY = re.compile(r"(?<![/\w-])astro-mine-(" + "|".join(sorted(COMPONENTS)) + r")(?![\w-])")
 
+#: `bench fetch --registry` renders its default by *resolving* it -- `default_store_path()` is
+#: `$XDG_CACHE_HOME`-or-`~/.cache` joined with `astro-mine/hub-registry` -- so the help string
+#: names whichever home the process is running under. The fixture froze one machine's answer
+#: (`/home/djankov/...`) and CI is another (`/home/runner/...`), which failed the contract for a
+#: difference that is not a change in behaviour. Showing the caller their own resolved path is the
+#: better help text, so the *comparison* is what gets normalized, not the command: both sides have
+#: the resolved store collapsed to a token, and the rest of the string -- `$ASTRO_MINE_HUB_REGISTRY`
+#: taking precedence, the trailing `astro-mine/hub-registry` segments -- is still compared exactly.
+#: Anchored on the `astro-mine/hub-registry` tail, so the workspace's `files/hub-registry` keys
+#: (whose defaults are constants, not machine-derived) are untouched.
+_RESOLVED_STORE = re.compile(r"/[\w.-]+(?:/[\w.-]+)*/astro-mine/hub-registry(?![\w-])")
+
+#: What :data:`_RESOLVED_STORE` collapses to. Not a valid path, deliberately: if this ever leaks
+#: into a comparison it should look wrong rather than plausibly pass.
+_STORE_TOKEN = "<resolved default store>"
+
+
+def _despecialize(text: str) -> str:
+    """Collapse the machine-dependent parts of a parser description. Applied to *both* sides."""
+    return _RESOLVED_STORE.sub(_STORE_TOKEN, text)
+
 
 def _readdress(value: Any) -> Any:
     """Rewrite the fixture's retired names to the ones this distribution actually offers.
@@ -109,7 +137,7 @@ def _readdress(value: Any) -> Any:
 
 @pytest.fixture(scope="session")
 def snapshot() -> dict[str, Any]:
-    return json.loads(_readdress(FIXTURE.read_text(encoding="utf-8")))
+    return json.loads(_despecialize(_readdress(FIXTURE.read_text(encoding="utf-8"))))
 
 
 def _describe_action(action: argparse.Action) -> dict[str, Any]:
@@ -156,7 +184,7 @@ def _built(component: str) -> dict[str, Any]:
     module = importlib.import_module(COMPONENTS[component].module)
     parser = argparse.ArgumentParser(prog=f"astro-mine {component}")
     module.command.add_arguments(parser)
-    return _describe(parser)
+    return json.loads(_despecialize(json.dumps(_describe(parser))))
 
 
 @pytest.mark.parametrize("component", PORTED)
@@ -203,3 +231,33 @@ def test_the_fixture_covers_every_component_and_all_fifty_verbs(snapshot: dict[s
     )
     total = sum(len(c["verbs"]) or 1 for c in snapshot.values())
     assert total == 50, f"expected 50 verbs in the contract, found {total}"
+
+
+def test_the_store_normalization_collapses_only_the_resolved_default() -> None:
+    """Guards normalization 3: too narrow and CI fails again, too wide and a real edit slips past.
+
+    The negative half is the load-bearing one. `files/hub-registry` appears in the contract as
+    Guard's dev-key defaults, and those are *constants* -- the same string on every machine -- so
+    collapsing them would hide a genuine change to where `guard sign` looks for a key.
+    """
+    for home in ("/home/djankov", "/home/runner", "/Users/someone/Library/Caches"):
+        rendered = f"populate (default: $X, else {home}/.cache/astro-mine/hub-registry)"
+        assert _despecialize(rendered) == f"populate (default: $X, else {_STORE_TOKEN})"
+
+    untouched = (
+        "PosixPath('/mnt/d/MyProjects/AstroMine/files/hub-registry/keys/anchor-dev.key.pem')",
+        "the cache dir `astro-mine bench fetch` writes to",
+        "hub-registry",
+    )
+    for text in untouched:
+        assert _despecialize(text) == text, text
+
+
+def test_the_contract_carries_no_machine_dependent_path(snapshot: dict[str, Any]) -> None:
+    """No *newly* frozen home directory. A path under a home is a machine's answer, not a contract.
+
+    Checked on the normalized snapshot, so the one known resolution is already a token: this fails
+    on the next help string that bakes in `Path.home()` without a normalization to go with it.
+    """
+    leaked = re.findall(r"/(?:home|Users|root)/[\w.-]+", json.dumps(snapshot))
+    assert not leaked, f"machine-dependent paths in the contract: {sorted(set(leaked))}"

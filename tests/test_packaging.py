@@ -7,6 +7,7 @@ and a rule enforced only by review is a rule that erodes on the first convenient
 from __future__ import annotations
 
 from importlib.metadata import entry_points, requires
+from pathlib import Path
 
 import astro_mine.cli
 
@@ -72,4 +73,37 @@ def test_version_is_resolved_from_installed_metadata() -> None:
     assert astro_mine.cli.__version__
     assert astro_mine.cli.__version__ != "0.0.0.dev0", (
         "the fallback fired, so the package under test is not installed; run `uv sync`"
+    )
+
+
+def test_the_platform_pin_resolves_to_something_installable() -> None:
+    """CI's last step installs the platform from this pin; nothing else checks the pin parses.
+
+    It went unchecked and it broke. The reading was a `python -c` one-liner in the workflow that
+    hard-coded the `rev` key; astro-mine-cli#36 replaced `rev` with `branch = "main"` -- correctly,
+    since `conventions.md` §3.1 requires this build to run against the platform at HEAD rather than
+    a released pin -- and the step died on `KeyError: 'rev'` for every run afterwards.
+
+    The reading is `scripts/platform_pin.py` now and this calls the same function CI calls, so the
+    next change to the pin's *shape* fails here, locally, in a lane that takes seconds -- rather
+    than in the last step of CI after the wheel has already been built.
+    """
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    try:
+        from platform_pin import platform_requirement
+    finally:
+        sys.path.pop(0)
+
+    requirement = platform_requirement(Path(__file__).resolve().parents[1] / "pyproject.toml")
+    name, _, url = requirement.partition(" @ ")
+    assert name == "astro-mine-platform"
+    assert url.startswith("git+https://github.com/astro-mine/astro-mine-platform.git@"), requirement
+
+    # §3.1: HEAD, not a release. A pin that resolved a tag or a frozen commit could not fail for any
+    # platform change, which is what made this build's green board misleading for twenty commits.
+    assert url.rsplit("@", 1)[1] == "main", (
+        f"the platform pin resolves {url.rsplit('@', 1)[1]!r}, not the branch head. "
+        "conventions.md §3.1 requires this build to run against the platform at HEAD."
     )
